@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>세모나라 파일서버</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --border:  #30363d;
+  --accent:  #2f81f7;
+  --accent2: #388bfd;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+}
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+
+.wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
+}
+
+/* 헤더 */
+.site-header { text-align: center; margin-bottom: 64px; }
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.logo-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #2f81f7 0%, #388bfd 100%);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 4px 20px rgba(47,129,247,0.35);
+}
+.logo-text { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.logo-sub {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.header-divider {
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin: 24px auto 0;
+}
+
+/* 섹션 */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 20px;
+}
+
+/* 카드 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  display: block;
+  color: var(--text);
+  transition: border-color .18s, transform .18s, box-shadow .18s;
+}
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity .18s;
+}
+.project-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(47,129,247,0.15);
+  color: var(--text);
+}
+.project-card:hover::before { opacity: 1; }
+
+.card-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  background: rgba(47,129,247,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(47,129,247,0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 16px;
+}
+.card-name { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 8px; }
+.card-desc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.card-arrow {
+  position: absolute;
+  bottom: 20px; right: 20px;
+  font-size: 18px;
+  color: var(--border);
+  transition: color .18s, right .18s;
+}
+.project-card:hover .card-arrow { color: var(--accent); right: 16px; }
+
+/* 푸터 */
+.site-footer {
+  text-align: center;
+  margin-top: 72px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header class="site-header">
+    <div class="logo-mark">
+      <div class="logo-icon">🏗</div>
+      <div>
+        <div class="logo-text">성산/노동천 재해복구사업 공유서버</div>
+        <div class="logo-sub">성산천 사업관리단</div>
+      </div>
+    </div>
+    <div class="header-divider"></div>
+  </header>
+
+  <p class="section-label">프로젝트 선택</p>
+  <div class="card-grid">
+    {% for key, info in projects.items() %}
+    <a class="project-card" href="/auth/{{ key }}">
+      <div class="card-badge">{{ key }}</div>
+      <div class="card-name">{{ info.name }}</div>
+      <div class="card-desc"><span>🔒</span><span>비밀번호 필요</span></div>
+      <div class="card-arrow">→</div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <footer class="site-footer">
+© 2026 성산천 사업관리단 &nbsp;·&nbsp; 내부 자료 공유 전용
+<br>
+관리자 : 박대호 &nbsp;·&nbsp; <a href="mailto:daeho1001@nate.com" style="color: var(--muted);">daeho1001@nate.com</a>
+  </footer>
+</div>
+</body>
+</html>

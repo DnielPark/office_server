@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>인증 — 세모나라 파일서버</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --border:  #30363d;
+  --accent:  #2f81f7;
+  --accent2: #388bfd;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+  --danger:  #f85149;
+}
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 40px 36px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  text-decoration: none;
+  transition: color .15s;
+}
+.back-link:hover { color: var(--text); }
+
+.auth-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+.auth-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus { border-color: var(--accent); }
+
+.btn-submit {
+  width: 100%;
+  margin-top: 20px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+
+.error-msg {
+  margin-top: 16px;
+  background: rgba(248,81,73,0.1);
+  border: 1px solid rgba(248,81,73,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--danger);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <a class="back-link" href="/">← 메인으로</a>
+    <span class="auth-icon">🔒</span>
+    <div class="auth-title">{{ project_name }}</div>
+    <div class="auth-sub">이 프로젝트는 비밀번호로 보호되어 있습니다.</div>
+    <form method="POST">
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" name="password" placeholder="••••••••" autofocus required>
+      </div>
+      <button type="submit" class="btn-submit">접속하기</button>
+      {% if error %}
+      <div class="error-msg">⚠ 비밀번호가 올바르지 않습니다.</div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+</body>
+</html>
