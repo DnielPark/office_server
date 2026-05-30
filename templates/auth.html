@@ -127,7 +127,11 @@ body {
         <input type="password" name="password" placeholder="••••••••" {% if not challenge %}autofocus{% endif %} required>
       <button type="submit" class="btn-submit">접속하기</button>
       {% if error %}
+      {% if challenge_error %}
+      <div class="error-msg">⚠ {{ challenge_error }}</div>
+      {% else %}
       <div class="error-msg">⚠ 비밀번호가 올바르지 않습니다.</div>
+      {% endif %}
       {% endif %}
     </form>
   </div>

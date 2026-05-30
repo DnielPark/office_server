@@ -347,6 +347,7 @@ def auth(project_key):
     info = PROJECTS[project_key]
     error = False
     challenge = None
+    challenge_error = None
     fail_key = f"login_fails_{project_key}"
 
     if request.method == "POST":
@@ -363,8 +364,10 @@ def auth(project_key):
                     session[f"auth_{project_key}"] = True
                     return redirect(url_for("files", project_key=project_key))
                 error = True
+                challenge_error = "비밀번호가 올바르지 않습니다."
             else:
-                error = True  # 챌린지 오답 → 새 문제
+                error = True
+                challenge_error = "정답이 틀렸습니다."
         else:
             # 일반 로그인 시도
             if password == info["password"]:
@@ -380,7 +383,7 @@ def auth(project_key):
             challenge = ch["question"]
             session[f"challenge_{project_key}"] = ch["answer"]
 
-    return render_template("auth.html", project_name=info["name"], error=error, challenge=challenge)
+    return render_template("auth.html", project_name=info["name"], error=error, challenge=challenge, challenge_error=challenge_error)
 
 @app.route("/files/<project_key>", defaults={"subpath": ""})
 @app.route("/files/<project_key>/<path:subpath>")
