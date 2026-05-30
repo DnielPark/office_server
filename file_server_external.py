@@ -535,6 +535,7 @@ def local_api_delete():
         return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동"})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
+@app.route("/upload/<project_key>", defaults={"subpath": ""}, methods=["POST"])
 @app.route("/upload/<project_key>/<path:subpath>", methods=["POST"])
 def upload(project_key, subpath):
     if project_key not in PROJECTS:
