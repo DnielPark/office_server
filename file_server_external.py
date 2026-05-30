@@ -428,10 +428,23 @@ def upload(project_key, subpath):
     if total_upload > remaining:
         return redirect(url_for("files", project_key=project_key, subpath=subpath, error="over"))
 
+    errors = []
     for f in request.files.getlist("files"):
-        if f.filename:
-            fname = decode_filename(f.filename)
+        if not f.filename:
+            continue
+        fname = decode_filename(f.filename)
+        # Windows 금지 문자 체크
+        invalid = set('\\/:*?"<>|')
+        if any(c in invalid for c in Path(fname).name):
+            errors.append(f"'{fname}' 파일명에 사용할 수 없는 문자가 있습니다.")
+            continue
+        try:
             f.save(str(target / Path(fname).name))
+        except OSError:
+            errors.append(f"'{fname}' 파일을 저장할 수 없습니다. 파일명을 확인해주세요.")
+
+    if errors:
+        return redirect(url_for("files", project_key=project_key, subpath=subpath, error=";;".join(errors)))
 
     return redirect(url_for("files", project_key=project_key, subpath=subpath))
 

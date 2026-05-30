@@ -426,8 +426,15 @@ const CURRENT_PATH = "{{ current_path }}";
 // 업로드 용량 초과 알림
 (function() {
   var params = new URLSearchParams(window.location.search);
-  if (params.get('error') === 'over') {
-    showToast('용량을 초과했습니다. 잔여 용량을 확인해주세요.', 'error');
+  var err = params.get('error');
+  if (err) {
+    if (err === 'over') {
+      showToast('용량을 초과했습니다. 잔여 용량을 확인해주세요.', 'error');
+    } else {
+      // 여러 에러 메시지 (;; 구분자)
+      var msgs = err.split(';;');
+      msgs.forEach(function(m) { showToast(m, 'error'); });
+    }
     history.replaceState({}, '', window.location.pathname);
   }
 })();
