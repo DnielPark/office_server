@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<title>{{ project_name }} — 성산천/구동천 파일서버</title>
+<title>성산1공구 — 성산천/구동천 파일서버</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,35 +292,28 @@ a { color: var(--accent); text-decoration: none; }
   <div class="topbar-left">
     <a class="home-btn" href="/" title="메인으로">🏗</a>
     <div class="breadcrumb">
-      <a href="/files/{{ project_key }}">{{ project_name }}</a>
-      {% for crumb in breadcrumbs %}
-        <span class="sep">/</span>
-        {% if not loop.last %}
-          <a href="/files/{{ project_key }}/{{ crumb.path }}">{{ crumb.name }}</a>
-        {% else %}
-          <span class="current">{{ crumb.name }}</span>
-        {% endif %}
-      {% endfor %}
+      <a href="/files/sungsan1">성산1공구</a>
+      
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
-    <a class="logout-btn" href="/logout/{{ project_key }}">로그아웃</a>
+    <a class="logout-btn" href="/change-password/sungsan1">🔑 비밀번호 변경</a>
+    <a class="logout-btn" href="/logout/sungsan1">로그아웃</a>
   </div>
 </div>
 
 <!-- 용량 표시줄 -->
-{% if usage %}
+
 <div class="usage-bar-wrap">
   <div class="usage-bar">
-    <div class="usage-fill" style="width:{{ usage.pct }}%"></div>
+    <div class="usage-fill" style="width:0.0%"></div>
   </div>
-  <span class="usage-text">{{ usage.used_str }} / {{ usage.max_str }}</span>
+  <span class="usage-text">28.7 KB / 100.0 GB</span>
 </div>
 <script>
 // 용량 경고 색상
 (function(){
-  var pct = {{ usage.pct }};
+  var pct = 0.0;
   var fill = document.querySelector('.usage-fill');
   if (fill) {
     if (pct > 90) fill.classList.add('danger');
@@ -328,7 +321,7 @@ a { color: var(--accent); text-decoration: none; }
   }
 })();
 </script>
-{% endif %}
+
 
 <!-- 콘텐츠 -->
 <div class="content">
@@ -341,7 +334,7 @@ a { color: var(--accent); text-decoration: none; }
 
     <!-- 업로드 -->
     <form class="upload-section" method="POST"
-          action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
+          action="/upload/sungsan1"
           enctype="multipart/form-data">
       <span class="upload-label">📤 업로드</span>
       <input type="file" name="files" multiple>
@@ -372,56 +365,194 @@ a { color: var(--accent); text-decoration: none; }
       </tr>
     </thead>
     <tbody id="file-tbody">
-      {% if parent_path is not none %}
+      
+      
       <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="test" onchange="updateDL()">
+        </td>
         <td>
           <div class="file-name">
             <span class="file-icon">📁</span>
-            <a href="/files/{{ project_key }}{% if parent_path %}/{{ parent_path }}{% endif %}">
-              .. (상위 폴더)
-            </a>
+            <a href="/files/sungsan1/test">test</a>
           </div>
         </td>
-        <td class="col-date">—</td>
+        <td class="col-date">2026-05-20 15:36</td>
         <td class="col-size">—</td>
-        <td class="col-action"></td>
-      </tr>
-      {% endif %}
-      {% for entry in entries %}
-      <tr>
-        <td class="check-col">
-          <input type="checkbox" class="file-check file-check-item" data-path="{{ entry.rel_path }}" onchange="updateDL()">
-        </td>
-        <td>
-          <div class="file-name">
-            <span class="file-icon">{{ '📁' if entry.is_dir else '📄' }}</span>
-            <a href="/files/{{ project_key }}/{{ entry.rel_path }}">{{ entry.name }}</a>
-          </div>
-        </td>
-        <td class="col-date">{{ entry.mtime }}</td>
-        <td class="col-size">{{ entry.size }}</td>
         <td class="col-action">
 	  <button class="delete-btn"
-       		 data-path="{{ entry.rel_path }}"
-       		 data-name="{{ entry.name }}"
-        	 data-isdir="{{ 'true' if entry.is_dir else 'false' }}"
+       		 data-path="test"
+       		 data-name="test"
+        	 data-isdir="true"
        		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
        		 title="삭제">🗑</button>
         </td>
       </tr>
-      {% endfor %}
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="안전관리" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📁</span>
+            <a href="/files/sungsan1/안전관리">안전관리</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-22 15:10</td>
+        <td class="col-size">—</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="안전관리"
+       		 data-name="안전관리"
+        	 data-isdir="true"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="final.txt" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/final.txt">final.txt</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-29 17:19</td>
+        <td class="col-size">26 B</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="final.txt"
+       		 data-name="final.txt"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="test.txt" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/test.txt">test.txt</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-29 17:18</td>
+        <td class="col-size">11 B</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="test.txt"
+       		 data-name="test.txt"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="test_up.txt" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/test_up.txt">test_up.txt</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-29 17:19</td>
+        <td class="col-size">16 B</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="test_up.txt"
+       		 data-name="test_up.txt"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="ziptest.txt" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/ziptest.txt">ziptest.txt</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-29 17:22</td>
+        <td class="col-size">38 B</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="ziptest.txt"
+       		 data-name="ziptest.txt"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="사용설명서.md" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/사용설명서.md">사용설명서.md</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-29 17:20</td>
+        <td class="col-size">7.0 KB</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="사용설명서.md"
+       		 data-name="사용설명서.md"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="스크린샷 2026-05-14 095934.png" onchange="updateDL()">
+        </td>
+        <td>
+          <div class="file-name">
+            <span class="file-icon">📄</span>
+            <a href="/files/sungsan1/스크린샷 2026-05-14 095934.png">스크린샷 2026-05-14 095934.png</a>
+          </div>
+        </td>
+        <td class="col-date">2026-05-18 14:19</td>
+        <td class="col-size">21.6 KB</td>
+        <td class="col-action">
+	  <button class="delete-btn"
+       		 data-path="스크린샷 2026-05-14 095934.png"
+       		 data-name="스크린샷 2026-05-14 095934.png"
+        	 data-isdir="false"
+       		 onclick="doDelete(this.dataset.path, this.dataset.name, this.dataset.isdir === 'true')"
+       		 title="삭제">🗑</button>
+        </td>
+      </tr>
+      
     </tbody>
   </table>
 
-  {% if not entries and parent_path is none %}
-  <div class="empty-state">📂 폴더가 비어 있습니다.</div>
-  {% endif %}
+  
 
 </div>
 
 <script>
-const PROJECT_KEY  = "{{ project_key }}";
-const CURRENT_PATH = "{{ current_path }}";
+const PROJECT_KEY  = "sungsan1";
+const CURRENT_PATH = "";
 
 // 업로드 용량 초과 알림
 (function() {

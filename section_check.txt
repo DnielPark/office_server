@@ -1,0 +1,23 @@
+usage-text { white-space: nowrap; }
+
+/* 콘텐츠 */
+.content { max-width: 960px; margin: 0 auto; padding: 28px 24px 80px; }
+
+/* 알림 메시지 */
+#toast {
+  display: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+#toast.error {
+  background: rgba(248,81,73,0.1);
+  border: 1px solid rgba(248,81,73,0.3);
+  color: var(--danger);
+}
+#toast.success {
+  background: rgba(63,185,80,0.1);
+  border: 1px solid rgba(63,185,80,0.3);
+  color: var(--success)
