@@ -13,8 +13,72 @@ import secrets, os, io, zipfile, json, smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import logging
+from logging.handlers import RotatingFileHandler
+
+# ── 로깅 설정 ─────────────────────────────────
+LOG_DIR = Path(__file__).parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+log_formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+
+# 파일 로거 (5MB × 3개 = 최대 15MB)
+file_handler = RotatingFileHandler(
+    str(LOG_DIR / "server.log"),
+    maxBytes=5*1024*1024,
+    backupCount=3,
+    encoding="utf-8"
+)
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(logging.INFO)
+
+# 에러 전용 로거
+error_handler = RotatingFileHandler(
+    str(LOG_DIR / "error.log"),
+    maxBytes=5*1024*1024,
+    backupCount=3,
+    encoding="utf-8"
+)
+error_handler.setFormatter(log_formatter)
+error_handler.setLevel(logging.ERROR)
+
+# 콘솔 로거
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+console_handler.setLevel(logging.DEBUG)
+
+# Flask 루트 로거에 핸들러 등록
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(file_handler)
+root_logger.addHandler(error_handler)
+root_logger.addHandler(console_handler)
+
+# Flask/Werkzeug 로그 레벨 조정
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
+
+# ── 요청 로깅 ────────────────────────────────
+@app.before_request
+def log_request():
+    path = request.path
+    # 정적 파일/API 노이즈 제외
+    if not path.startswith("/static") and not path.startswith("/api/download"):
+        logging.info(f"→ {request.method} {path} ({request.remote_addr})")
+
+@app.after_request
+def log_response(response):
+    path = request.path
+    if not path.startswith("/static"):
+        logging.info(f"← {response.status_code} {request.method} {path}")
+    return response
 
 SHARED_FOLDER = Path(r"E:\openshare")
 
