@@ -306,6 +306,64 @@ def logout(project_key):
     session.pop(f"auth_{project_key}", None)
     return redirect(url_for("index"))
 
+
+@app.route("/change-password/<project_key>", methods=["GET", "POST"])
+def change_password(project_key):
+    """공구 비밀번호 변경"""
+    if project_key not in PROJECTS:
+        return redirect(url_for("index"))
+
+    if request.method == "GET":
+        if not is_authenticated(project_key):
+            return redirect(url_for("auth", project_key=project_key))
+        return render_template(
+            "change_password.html",
+            project_key=project_key,
+            project_name=PROJECTS[project_key]["name"]
+        )
+
+    # POST: 비밀번호 변경 처리
+    if not is_authenticated(project_key):
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."}), 401
+
+    data = request.get_json(force=True)
+    old_pw = data.get("old_pw", "")
+    new_pw = data.get("new_pw", "")
+
+    # 현재 비밀번호 확인
+    if old_pw != PROJECTS[project_key]["password"]:
+        return jsonify({"ok": False, "msg": "현재 비밀번호가 일치하지 않습니다."})
+
+    # 새 비밀번호 검증
+    if len(new_pw) < 4:
+        return jsonify({"ok": False, "msg": "비밀번호는 4자 이상이어야 합니다."})
+
+    # .env 키 매핑
+    ENV_KEYS = {
+        "sungsan1": "SUNGSAN1_PW",
+        "sungsan2": "SUNGSAN2_PW",
+        "gudong1":  "GUDONG1_PW",
+        "gudong2":  "GUDONG2_PW",
+    }
+    env_key = ENV_KEYS.get(project_key)
+    if not env_key:
+        return jsonify({"ok": False, "msg": "잘못된 프로젝트입니다."})
+
+    try:
+        # .env 파일 업데이트
+        from dotenv import set_key
+        env_path = Path(__file__).parent / ".env"
+        set_key(str(env_path), env_key, new_pw)
+
+        # 메모리 업데이트
+        PROJECTS[project_key]["password"] = new_pw
+
+        print(f"[PW] {project_key} 비밀번호 변경됨")
+        return jsonify({"ok": True, "msg": "비밀번호가 변경되었습니다."})
+    except Exception as e:
+        print(f"[PW ERROR] {e}")
+        return jsonify({"ok": False, "msg": f"파일 쓰기 오류: {e}"})
+
 @app.errorhandler(403)
 def forbidden(_):
     return render_template("local_auth.html"), 403

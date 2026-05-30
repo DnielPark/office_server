@@ -270,7 +270,10 @@ a { color: var(--accent); text-decoration: none; }
       {% endfor %}
     </div>
   </div>
-  <a class="logout-btn" href="/logout/{{ project_key }}">로그아웃</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
+    <a class="logout-btn" href="/logout/{{ project_key }}">로그아웃</a>
+  </div>
 </div>
 
 <!-- 콘텐츠 -->
