@@ -1,7 +1,7 @@
 """
 file_server_external.py  —  대외용 웹 파일 서버
 포트  : 5050
-공유  : E:\openshare
+공유  : E:/openshare
 """
 
 from flask import (Flask, render_template, send_from_directory, send_file,
@@ -496,6 +496,10 @@ def local_api_mkdir():
     if not folder_name:
         return jsonify({"ok": False, "msg": "폴더명을 입력하세요."})
 
+    invalid = set('\\/:*?"<>|')
+    if any(c in invalid for c in folder_name):
+        return jsonify({"ok": False, "msg": "폴더명에 \\ / : * ? \" < > | 를 사용할 수 없습니다."})
+
     target = safe_path(SHARED_FOLDER, subpath)
     new_folder = target / folder_name
     if new_folder.exists():
@@ -869,6 +873,10 @@ def api_mkdir():
         return jsonify({"ok": False, "msg": "인증이 필요합니다."})
     if not folder_name:
         return jsonify({"ok": False, "msg": "폴더명을 입력하세요."})
+
+    invalid = set('\\/:*?"<>|')
+    if any(c in invalid for c in folder_name):
+        return jsonify({"ok": False, "msg": "폴더명에 \\ / : * ? \" < > | 를 사용할 수 없습니다."})
 
     base = SHARED_FOLDER / project_key
     target = safe_path(base, subpath)
