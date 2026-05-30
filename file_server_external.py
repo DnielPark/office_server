@@ -721,7 +721,7 @@ def local_verify():
         "local_token", new_token,
         max_age=30*24*3600,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="Lax",
         path="/"
     )
