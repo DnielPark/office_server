@@ -70,6 +70,39 @@ a { color: var(--accent); text-decoration: none; }
 }
 .logout-btn:hover { border-color: var(--muted); color: var(--text); }
 
+/* 용량 표시줄 */
+.usage-bar-wrap {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--muted);
+  position: sticky;
+  top: 46px;
+  z-index: 9;
+}
+.usage-bar {
+  flex: 1;
+  max-width: 200px;
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #58a6ff);
+  border-radius: 3px;
+  transition: width .5s ease;
+}
+.usage-fill.warn { background: linear-gradient(90deg, #d29922, #e3b341); }
+.usage-fill.danger { background: linear-gradient(90deg, var(--danger), #f85149); }
+.usage-text { white-space: nowrap; }
+
 /* 콘텐츠 */
 .content { max-width: 960px; margin: 0 auto; padding: 28px 24px 80px; }
 
@@ -276,6 +309,26 @@ a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
+<!-- 용량 표시줄 -->
+{% if usage %}
+<div class="usage-bar-wrap">
+  <div class="usage-bar">
+    <div class="usage-fill" style="width:{{ usage.pct }}%"></div>
+  </div>
+  <span class="usage-text">{{ usage.used_str }} / {{ usage.max_str }}</span>
+</div>
+<script>
+// 용량 경고 색상
+(function(){
+  var pct = {{ usage.pct }};
+  var fill = document.querySelector('.usage-fill');
+  if (fill) {
+    if (pct > 90) fill.classList.add('danger');
+    else if (pct > 75) fill.classList.add('warn');
+  }
+})();
+{% endif %}
+
 <!-- 콘텐츠 -->
 <div class="content">
 
@@ -368,6 +421,15 @@ a { color: var(--accent); text-decoration: none; }
 <script>
 const PROJECT_KEY  = "{{ project_key }}";
 const CURRENT_PATH = "{{ current_path }}";
+
+// 업로드 용량 초과 알림
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('error') === 'over') {
+    showToast('용량을 초과했습니다. 잔여 용량을 확인해주세요.', 'error');
+    history.replaceState({}, '', window.location.pathname);
+  }
+})();
 
 function showToast(msg, type) {
   const t = document.getElementById("toast");

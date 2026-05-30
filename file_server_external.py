@@ -195,6 +195,49 @@ def safe_path(base: Path, subpath: str) -> Path:
         abort(403)
     return target
 
+# ── 용량 관련 헬퍼 ────────────────────────────
+import time as _time
+
+_usage_cache = {}  # {project_key: (timestamp_sec, size_bytes)}
+
+def get_folder_size(path: Path) -> int:
+    """폴더 전체 용량 (바이트), .backup 제외"""
+    total = 0
+    try:
+        for item in path.rglob("*"):
+            if item.name == ".backup":
+                continue
+            if item.is_file():
+                total += item.stat().st_size
+    except:
+        pass
+    return total
+
+def get_project_usage(project_key: str) -> dict:
+    """프로젝트 사용량 + 최대치 (캐시 30초)"""
+    now = _time.time()
+    cached = _usage_cache.get(project_key)
+    if cached and now - cached[0] < 30:
+        used = cached[1]
+    else:
+        base = SHARED_FOLDER / project_key
+        if base.exists():
+            used = get_folder_size(base)
+        else:
+            used = 0
+        _usage_cache[project_key] = (now, used)
+
+    max_bytes = int(os.getenv("PROJECT_MAX_SIZE_GB", "10")) * 1024**3
+    pct = round(used / max_bytes * 100, 1) if max_bytes > 0 else 0
+    return {
+        "used": used,
+        "max": max_bytes,
+        "pct": min(pct, 100),
+        "used_str": fmt_size(used),
+        "max_str": fmt_size(max_bytes),
+        "free_str": fmt_size(max_bytes - used) if used <= max_bytes else "0 B",
+    }
+
 # ─────────────────────────────────────────────
 # 페이지 라우트
 # ─────────────────────────────────────────────
@@ -246,6 +289,7 @@ def files(project_key, subpath):
         current_path=subpath,
         breadcrumbs=breadcrumbs,
         parent_path=parent_path,
+        usage=get_project_usage(project_key),
     )
 
 # ─────────────────────────────────────────────
@@ -297,6 +341,13 @@ def upload(project_key, subpath):
 
     base = SHARED_FOLDER / project_key
     target = safe_path(base, subpath)
+
+    usage = get_project_usage(project_key)
+    remaining = usage["max"] - usage["used"]
+    total_upload = request.content_length or 0
+
+    if total_upload > remaining:
+        return redirect(url_for("files", project_key=project_key, subpath=subpath, error="over"))
 
     for f in request.files.getlist("files"):
         if f.filename:
