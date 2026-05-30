@@ -306,6 +306,11 @@ def logout(project_key):
     session.pop(f"auth_{project_key}", None)
     return redirect(url_for("index"))
 
+@app.errorhandler(403)
+def forbidden(_):
+    return render_template("local_auth.html"), 403
+
+
 @app.errorhandler(404)
 def not_found(_):
     return redirect(url_for("index"))
@@ -414,6 +419,106 @@ def local_logout():
     resp = make_response(redirect(url_for("local_auth")))
     resp.delete_cookie("local_token", path="/")
     return resp
+
+# ─────────────────────────────────────────────
+# 로컬 폴더 관리자 페이지
+# ─────────────────────────────────────────────
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "daeho1001@nate.com")
+
+
+def is_admin():
+    """현재 요청이 관리자(ADMIN_EMAIL)인지 확인"""
+    token = get_token_from_request()
+    email = get_email_by_token(token)
+    return email == ADMIN_EMAIL
+
+
+@app.route("/local/admin")
+def local_admin():
+    """토큰 관리자 페이지"""
+    if not is_admin():
+        abort(403)
+
+    tokendata = load_tokens()
+    return render_template(
+        "local_admin.html",
+        tokens=tokendata.get("tokens", {}),
+        allowed_emails=tokendata.get("allowed_emails", []),
+        admin_email=ADMIN_EMAIL,
+    )
+
+
+@app.route("/local/admin/add-email", methods=["POST"])
+def local_admin_add_email():
+    """허용 이메일 추가"""
+    if not is_admin():
+        return jsonify({"ok": False, "msg": "권한이 없습니다."}), 403
+
+    data = request.get_json(force=True)
+    email = data.get("email", "").strip().lower()
+
+    if not email or "@" not in email:
+        return jsonify({"ok": False, "msg": "올바른 이메일을 입력해주세요."})
+
+    tokendata = load_tokens()
+    if email in [e.lower() for e in tokendata.get("allowed_emails", [])]:
+        return jsonify({"ok": False, "msg": "이미 등록된 이메일입니다."})
+
+    tokendata.setdefault("allowed_emails", []).append(email)
+    save_tokens(tokendata)
+    print(f"[ADMIN] 이메일 추가됨: {email}")
+    return jsonify({"ok": True, "msg": f"'{email}' 추가 완료"})
+
+
+@app.route("/local/admin/remove-email", methods=["POST"])
+def local_admin_remove_email():
+    """허용 이메일 삭제"""
+    if not is_admin():
+        return jsonify({"ok": False, "msg": "권한이 없습니다."}), 403
+
+    data = request.get_json(force=True)
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"ok": False, "msg": "이메일을 입력해주세요."})
+
+    if email == ADMIN_EMAIL:
+        return jsonify({"ok": False, "msg": "관리자 이메일은 삭제할 수 없습니다."})
+
+    tokendata = load_tokens()
+    cleaned = [e for e in tokendata.get("allowed_emails", []) if e.lower() != email]
+    if len(cleaned) == len(tokendata.get("allowed_emails", [])):
+        return jsonify({"ok": False, "msg": "등록되지 않은 이메일입니다."})
+
+    tokendata["allowed_emails"] = cleaned
+    # 토큰도 함께 삭제
+    tokendata["tokens"].pop(email, None)
+    save_tokens(tokendata)
+    print(f"[ADMIN] 이메일 삭제됨: {email}")
+    return jsonify({"ok": True, "msg": f"'{email}' 제거 완료"})
+
+
+@app.route("/local/admin/revoke-token", methods=["POST"])
+def local_admin_revoke_token():
+    """특정 이메일의 토큰 강제 취소"""
+    if not is_admin():
+        return jsonify({"ok": False, "msg": "권한이 없습니다."}), 403
+
+    data = request.get_json(force=True)
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"ok": False, "msg": "이메일을 입력해주세요."})
+
+    tokendata = load_tokens()
+    if email not in tokendata.get("tokens", {}):
+        return jsonify({"ok": False, "msg": "해당 이메일의 토큰이 없습니다."})
+
+    tokendata["tokens"].pop(email, None)
+    save_tokens(tokendata)
+    print(f"[ADMIN] 토큰 취소됨: {email}")
+    return jsonify({"ok": True, "msg": f"'{email}' 토큰 취소 완료"})
 
 # ─────────────────────────────────────────────
 # API 라우트 (JS fetch 전용)
