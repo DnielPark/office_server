@@ -446,6 +446,7 @@ def local_browse(subpath):
 
 # ── 로컬 폴더 API ────────────────────────────
 LOCAL_BACKUP = SHARED_FOLDER / ".backup"
+MAX_UPLOAD_MB = 100  # 파일당 최대 업로드 크기 (MB)
 
 
 @app.route("/local-upload", defaults={"subpath": ""}, methods=["POST"])
@@ -457,6 +458,14 @@ def local_upload(subpath):
 
     target = safe_path(SHARED_FOLDER, subpath)
     errors = []
+
+    # 용량 체크
+    upload_size = request.content_length or 0
+    max_bytes = MAX_UPLOAD_MB * 1024 * 1024
+    if upload_size > max_bytes:
+        errors.append(f"파일 크기가 {MAX_UPLOAD_MB}MB를 초과합니다.")
+        return redirect(url_for("local_browse", subpath=subpath, error=";;".join(errors)))
+
     for f in request.files.getlist("files"):
         if not f.filename:
             continue
@@ -540,6 +549,10 @@ def upload(project_key, subpath):
     total_upload = request.content_length or 0
 
     if total_upload > remaining:
+        return redirect(url_for("files", project_key=project_key, subpath=subpath, error="over"))
+
+    max_bytes = MAX_UPLOAD_MB * 1024 * 1024
+    if total_upload > max_bytes:
         return redirect(url_for("files", project_key=project_key, subpath=subpath, error="over"))
 
     errors = []
