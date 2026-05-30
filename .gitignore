@@ -27,3 +27,7 @@ git-office-*.cmd
 
 # local token auth data (contains emails & tokens)
 local_tokens.json
+
+# Test files
+*.py
+!file_server_external.py
