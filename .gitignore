@@ -19,5 +19,11 @@ build/
 Thumbs.db
 .DS_Store
 
+# Scripts convenance
+git-office-*.cmd
+
 # Git backup files
 *.back.txt
+
+# local token auth data (contains emails & tokens)
+local_tokens.json

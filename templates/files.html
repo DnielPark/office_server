@@ -225,7 +225,26 @@ a { color: var(--accent); text-decoration: none; }
 }
 .delete-btn:hover { color: var(--danger); background: rgba(248,81,73,0.1); }
 
-.empty-state {
+/* 선택 다운로드 */
+.check-col { width: 36px; text-align: center; }
+.file-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+.dl-selected-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.dl-selected-btn.active { opacity: 1; pointer-events: auto; }
+.dl-selected-btn:hover { background: var(--accent2); }
+.dl-selected-btn:hover { background: var(--accent2); }
   text-align: center;
   padding: 60px 24px;
   color: var(--muted);
@@ -265,7 +284,7 @@ a { color: var(--accent); text-decoration: none; }
 
     <!-- 업로드 -->
     <form class="upload-section" method="POST"
-          action="/upload/{{ project_key }}/{{ current_path }}"
+          action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
           enctype="multipart/form-data">
       <span class="upload-label">📤 업로드</span>
       <input type="file" name="files" multiple>
@@ -279,16 +298,20 @@ a { color: var(--accent); text-decoration: none; }
       <button class="mkdir-btn" onclick="doMkdir()">생성</button>
     </div>
 
+    <!-- 선택 다운로드 -->
+    <button class="dl-selected-btn" id="dl-selected-btn" onclick="doDownloadSelected()">📦 선택 다운로드</button>
+
   </div>
 
   <!-- 파일 목록 -->
   <table class="file-table">
     <thead>
       <tr>
+        <th class="check-col"><input type="checkbox" class="file-check" id="check-all" onclick="toggleAll()"></th>
         <th>이름</th>
         <th class="col-date">수정일</th>
         <th class="col-size">크기</th>
-        <th class="col-action"></th>
+        <th class="col-action">삭제</th>
       </tr>
     </thead>
     <tbody id="file-tbody">
@@ -309,6 +332,9 @@ a { color: var(--accent); text-decoration: none; }
       {% endif %}
       {% for entry in entries %}
       <tr>
+        <td class="check-col">
+          <input type="checkbox" class="file-check file-check-item" data-path="{{ entry.rel_path }}" onchange="updateDL()">
+        </td>
         <td>
           <div class="file-name">
             <span class="file-icon">{{ '📁' if entry.is_dir else '📄' }}</span>
@@ -393,6 +419,56 @@ async function doDelete(relPath, name, isDir) {
   } else {
     showToast(data.msg, "error");
   }
+}
+
+// 전체 선택
+function toggleAll() {
+  const checked = document.getElementById("check-all").checked;
+  document.querySelectorAll(".file-check-item").forEach(cb => cb.checked = checked);
+  updateDL();
+}
+
+// 선택 상태 업데이트
+function updateDL() {
+  const btn = document.getElementById("dl-selected-btn");
+  const count = document.querySelectorAll(".file-check-item:checked").length;
+  btn.textContent = count > 0 ? `📦 선택 다운로드 (${count})` : "📦 선택 다운로드";
+  btn.classList.toggle("active", count > 0);
+}
+
+// 선택 다운로드 (ZIP)
+async function doDownloadSelected() {
+  const checked = document.querySelectorAll(".file-check-item:checked");
+  if (checked.length === 0) { showToast("파일을 선택하세요.", "error"); return; }
+
+  const paths = [];
+  checked.forEach(cb => paths.push(cb.dataset.path));
+
+  const res = await fetch("/api/download-selected", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: PROJECT_KEY, paths: paths })
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    showToast(data.msg || "다운로드 실패", "error");
+    return;
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "files.zip";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("다운로드 시작!", "success");
+
+  // 선택 해제
+  document.querySelectorAll(".file-check-item").forEach(cb => cb.checked = false);
+  document.getElementById("check-all").checked = false;
+  updateDL();
 }
 
 // Enter 키로 폴더 생성

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>인증 완료 — 로컬 폴더</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --border:  #30363d;
+  --accent:  #2f81f7;
+  --accent2: #388bfd;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+  --success: #3fb950;
+}
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-box {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 48px 36px;
+  text-align: center;
+}
+.check-icon {
+  width: 64px; height: 64px;
+  background: rgba(63,185,80,0.12);
+  border: 2px solid rgba(63,185,80,0.3);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 32px;
+}
+.auth-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.auth-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.btn-primary {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+.token-box {
+  margin-top: 24px;
+  padding: 14px;
+  background: rgba(47,129,247,0.08);
+  border: 1px solid rgba(47,129,247,0.2);
+  border-radius: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="check-icon">✅</div>
+    <div class="auth-title">인증 완료!</div>
+    <div class="auth-sub">
+      브라우저에 토큰이 저장되었습니다.<br>
+      다음부터는 자동으로 인증됩니다.
+    </div>
+    <a class="btn-primary" href="/local">📂 로컬 폴더 열기</a>
+    {% if token %}
+    <div class="token-box">
+      🔑 {{ token[:12] }}...{{ token[-8:] }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

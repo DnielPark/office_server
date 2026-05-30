@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>인증 — 로컬 폴더</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --border:  #30363d;
+  --accent:  #2f81f7;
+  --accent2: #388bfd;
+  --text:    #e6edf3;
+  --muted:   #8b949e;
+  --danger:  #f85149;
+  --success: #3fb950;
+}
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 40px 36px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  text-decoration: none;
+  transition: color .15s;
+}
+.back-link:hover { color: var(--text); }
+
+.auth-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+.auth-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus { border-color: var(--accent); }
+
+.btn-submit {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.msg-box {
+  margin-top: 16px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  text-align: center;
+  display: none;
+}
+.msg-box.error {
+  display: block;
+  background: rgba(248,81,73,0.1);
+  border: 1px solid rgba(248,81,73,0.3);
+  color: var(--danger);
+}
+.msg-box.success {
+  display: block;
+  background: rgba(63,185,80,0.1);
+  border: 1px solid rgba(63,185,80,0.3);
+  color: var(--success);
+}
+.msg-box.info {
+  display: block;
+  background: rgba(47,129,247,0.1);
+  border: 1px solid rgba(47,129,247,0.3);
+  color: var(--accent);
+}
+
+.loader {
+  display: none;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.loader.active { display: block; }
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <a class="back-link" href="/">← 메인으로</a>
+    <span class="auth-icon">📧</span>
+    <div class="auth-title">이메일 인증</div>
+    <div class="auth-sub">
+      등록된 이메일로 인증 메일을 보내드립니다.<br>
+      메일 속 링크를 클릭하면 자동으로 인증됩니다.
+    </div>
+
+    <form id="authForm">
+      <div class="field">
+        <label>이메일 주소</label>
+        <input type="email" id="email" name="email" placeholder="name@example.com" autofocus required>
+      </div>
+      <button type="submit" class="btn-submit" id="submitBtn">인증 메일 보내기</button>
+    </form>
+
+    <div id="msgBox" class="msg-box"></div>
+    <div id="loader" class="loader">
+      <span class="spinner"></span> 메일 발송 중...
+    </div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('authForm');
+const emailInput = document.getElementById('email');
+const submitBtn = document.getElementById('submitBtn');
+const msgBox = document.getElementById('msgBox');
+const loader = document.getElementById('loader');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msgBox.className = 'msg-box';
+  msgBox.style.display = 'none';
+
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  submitBtn.disabled = true;
+  loader.classList.add('active');
+
+  try {
+    const res = await fetch('/local/send-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      msgBox.className = 'msg-box success';
+      msgBox.textContent = '✅ 인증 메일이 발송되었습니다. 메일함을 확인해주세요.';
+      submitBtn.textContent = '메일 재전송';
+      submitBtn.disabled = false;
+    } else {
+      msgBox.className = 'msg-box error';
+      msgBox.textContent = '⚠ ' + (data.msg || '오류가 발생했습니다.');
+      submitBtn.disabled = false;
+    }
+  } catch (err) {
+    msgBox.className = 'msg-box error';
+    msgBox.textContent = '⚠ 네트워크 오류가 발생했습니다.';
+    submitBtn.disabled = false;
+  } finally {
+    loader.classList.remove('active');
+  }
+});
+</script>
+</body>
+</html>
