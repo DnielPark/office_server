@@ -455,7 +455,86 @@ def local_browse(subpath):
     )
 
 
-@app.route("/upload/<project_key>", defaults={"subpath": ""}, methods=["POST"])
+# ── 로컬 폴더 API ────────────────────────────
+LOCAL_BACKUP = SHARED_FOLDER / ".backup"
+
+
+@app.route("/local-upload", defaults={"subpath": ""}, methods=["POST"])
+@app.route("/local-upload/<path:subpath>", methods=["POST"])
+def local_upload(subpath):
+    token = get_token_from_request()
+    if not get_email_by_token(token) and not is_local_ip():
+        return redirect(url_for("local_auth"))
+
+    target = safe_path(SHARED_FOLDER, subpath)
+    errors = []
+    for f in request.files.getlist("files"):
+        if not f.filename:
+            continue
+        fname = decode_filename(f.filename)
+        invalid = set('\\/:*?"<>|')
+        if any(c in invalid for c in Path(fname).name):
+            errors.append(f"'{fname}' 파일명에 사용할 수 없는 문자가 있습니다.")
+            continue
+        try:
+            f.save(str(target / Path(fname).name))
+        except OSError:
+            errors.append(f"'{fname}' 저장 실패")
+    if errors:
+        return redirect(url_for("local_browse", subpath=subpath, error=";;".join(errors)))
+    return redirect(url_for("local_browse", subpath=subpath))
+
+
+@app.route("/local/api/mkdir", methods=["POST"])
+def local_api_mkdir():
+    token = get_token_from_request()
+    if not get_email_by_token(token) and not is_local_ip():
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."}), 401
+
+    data = request.get_json(force=True)
+    subpath = data.get("path", "")
+    folder_name = data.get("folder_name", "").strip()
+
+    if not folder_name:
+        return jsonify({"ok": False, "msg": "폴더명을 입력하세요."})
+
+    target = safe_path(SHARED_FOLDER, subpath)
+    new_folder = target / folder_name
+    if new_folder.exists():
+        return jsonify({"ok": False, "msg": "이미 존재하는 폴더입니다."})
+    try:
+        new_folder.mkdir(parents=False)
+        return jsonify({"ok": True, "msg": f"'{folder_name}' 폴더 생성됨"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)})
+
+
+@app.route("/local/api/delete", methods=["POST"])
+def local_api_delete():
+    token = get_token_from_request()
+    if not get_email_by_token(token) and not is_local_ip():
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."}), 401
+
+    data = request.get_json(force=True)
+    subpath = data.get("path", "")
+    target = safe_path(SHARED_FOLDER, subpath)
+
+    if not target.exists():
+        return jsonify({"ok": False, "msg": "존재하지 않는 파일/폴더입니다."})
+
+    try:
+        LOCAL_BACKUP.mkdir(exist_ok=True)
+        dest = LOCAL_BACKUP / target.name
+        if dest.exists():
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            if target.is_file():
+                dest = LOCAL_BACKUP / f"{target.stem}_{ts}{target.suffix}"
+            else:
+                dest = LOCAL_BACKUP / f"{target.name}_{ts}"
+        target.rename(dest)
+        return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)})
 @app.route("/upload/<project_key>/<path:subpath>", methods=["POST"])
 def upload(project_key, subpath):
     if project_key not in PROJECTS:
