@@ -403,8 +403,8 @@ async function doMkdir() {
 
 async function doDelete(relPath, name, isDir) {
   const confirm_msg = isDir
-    ? `📁 "${name}" 폴더를 삭제하시겠습니까?`
-    : `📄 "${name}" 파일을 삭제하시겠습니까?`;
+    ? `📁 "${name}" 폴더를 .backup으로 이동할까요?`
+    : `📄 "${name}" 파일을 .backup으로 이동할까요?`;
   if (!confirm(confirm_msg)) return;
 
   const res = await fetch("/api/delete", {

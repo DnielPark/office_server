@@ -163,6 +163,9 @@ def get_entries(folder: Path, project_key: str, sub: str):
     entries = []
     try:
         for item in sorted(folder.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+            # .backup 폴더는 UI에서 숨김
+            if item.name == ".backup":
+                continue
             rel = f"{sub}/{item.name}".lstrip("/") if sub else item.name
             mtime = datetime.fromtimestamp(item.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
             size = fmt_size(item.stat().st_size) if item.is_file() else "—"
@@ -628,15 +631,20 @@ def api_delete():
         return jsonify({"ok": False, "msg": "존재하지 않는 파일/폴더입니다."})
 
     try:
-        if target.is_file():
-            target.unlink()
-            return jsonify({"ok": True, "msg": "파일이 삭제되었습니다."})
-        elif target.is_dir():
-            contents = list(target.iterdir())
-            if contents:
-                return jsonify({"ok": False, "msg": "내부 파일 삭제후 폴더 삭제하세요!!"})
-            target.rmdir()
-            return jsonify({"ok": True, "msg": "폴더가 삭제되었습니다."})
+        backup_dir = base / ".backup"
+        backup_dir.mkdir(exist_ok=True)
+
+        dest = backup_dir / target.name
+        # 같은 이름 이미 있으면 타임스탬프 추가
+        if dest.exists():
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            if target.is_file():
+                dest = backup_dir / f"{target.stem}_{ts}{target.suffix}"
+            else:
+                dest = backup_dir / f"{target.name}_{ts}"
+
+        target.rename(dest)
+        return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동했습니다."})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
 
