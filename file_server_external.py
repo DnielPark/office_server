@@ -259,6 +259,21 @@ def safe_path(base: Path, subpath: str) -> Path:
         abort(403)
     return target
 
+# ── 파일명 인코딩 헬퍼 ────────────────────────
+def decode_filename(fname):
+    """
+    브라우저가 CP949로 보낸 한글 파일명 복원.
+    Werkzeug가 Latin-1로 잘못 디코딩 → 물음표 등 깨짐 발생.
+    깨진 경우에만 latin-1 → cp949 재변환.
+    """
+    # 물음표 포함 = 인코딩 깨짐
+    if "?" in fname or "\ufffd" in fname:
+        try:
+            return fname.encode("latin-1").decode("cp949")
+        except:
+            pass
+    return fname
+
 # ── 용량 관련 헬퍼 ────────────────────────────
 import time as _time
 
@@ -415,7 +430,8 @@ def upload(project_key, subpath):
 
     for f in request.files.getlist("files"):
         if f.filename:
-            f.save(str(target / Path(f.filename).name))
+            fname = decode_filename(f.filename)
+            f.save(str(target / Path(fname).name))
 
     return redirect(url_for("files", project_key=project_key, subpath=subpath))
 
