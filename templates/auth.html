@@ -114,6 +114,9 @@ body {
     <span class="auth-icon">🔒</span>
     <div class="auth-title">{{ project_name }}</div>
     <div class="auth-sub">이 프로젝트는 비밀번호로 보호되어 있습니다.</div>
+    {% if blocked %}
+    <div class="error-msg" style="margin-bottom: 16px;">⛔ 너무 많은 로그인 시도로 <strong>{{ LOGIN_BLOCK_MINUTES }}분</strong> 동안 차단되었습니다.</div>
+    {% else %}
     <form method="POST">
       <div class="field">
         <label>비밀번호</label>
@@ -124,6 +127,7 @@ body {
       <div class="error-msg">⚠ 비밀번호가 올바르지 않습니다.</div>
       {% endif %}
     </form>
+    {% endif %}
   </div>
 </div>
 </body>

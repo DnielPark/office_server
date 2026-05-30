@@ -317,6 +317,36 @@ def get_project_usage(project_key: str) -> dict:
         "free_str": fmt_size(max_bytes - used) if used <= max_bytes else "0 B",
     }
 
+# ── 브루트포스 방어 ───────────────────────────
+LOGIN_ATTEMPTS = {}  # {"ip:project": {"count": n, "blocked_until": ts}}
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_BLOCK_MINUTES = 15
+
+def check_login_blocked(ip, project_key):
+    key = f"{ip}:{project_key}"
+    record = LOGIN_ATTEMPTS.get(key)
+    if record and record.get("blocked_until"):
+        if _time.time() < record["blocked_until"]:
+            return True
+        else:
+            LOGIN_ATTEMPTS.pop(key, None)
+    return False
+
+def record_login_fail(ip, project_key):
+    key = f"{ip}:{project_key}"
+    now = _time.time()
+    record = LOGIN_ATTEMPTS.get(key, {"count": 0})
+    record["count"] += 1
+    if record["count"] >= MAX_LOGIN_ATTEMPTS:
+        record["blocked_until"] = now + LOGIN_BLOCK_MINUTES * 60
+        logging.warning(f"[BRUTE] {ip} → {project_key} 차단됨 ({LOGIN_BLOCK_MINUTES}분)")
+    record["last_fail"] = now
+    LOGIN_ATTEMPTS[key] = record
+
+def record_login_success(ip, project_key):
+    key = f"{ip}:{project_key}"
+    LOGIN_ATTEMPTS.pop(key, None)
+
 # ─────────────────────────────────────────────
 # 페이지 라우트
 # ─────────────────────────────────────────────
@@ -331,14 +361,22 @@ def auth(project_key):
 
     info = PROJECTS[project_key]
     error = False
+    blocked = False
 
+    # 브루트포스 차단 확인
+    ip = request.remote_addr or ""
     if request.method == "POST":
-        if request.form.get("password", "") == info["password"]:
-            session[f"auth_{project_key}"] = True
-            return redirect(url_for("files", project_key=project_key))
-        error = True
+        if check_login_blocked(ip, project_key):
+            blocked = True
+        else:
+            if request.form.get("password", "") == info["password"]:
+                record_login_success(ip, project_key)
+                session[f"auth_{project_key}"] = True
+                return redirect(url_for("files", project_key=project_key))
+            error = True
+            record_login_fail(ip, project_key)
 
-    return render_template("auth.html", project_name=info["name"], error=error)
+    return render_template("auth.html", project_name=info["name"], error=error, blocked=blocked, LOGIN_BLOCK_MINUTES=LOGIN_BLOCK_MINUTES)
 
 @app.route("/files/<project_key>", defaults={"subpath": ""})
 @app.route("/files/<project_key>/<path:subpath>")
