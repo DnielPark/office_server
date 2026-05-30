@@ -241,7 +241,7 @@ async function doMkdir() {
 }
 
 async function doDelete(relPath, name, isDir) {
-  const msg = isDir ? `"${name}" 폴더를 .backup으로 이동할까요?` : `"${name}" 파일을 .backup으로 이동할까요?`;
+  const msg = isDir ? `"${name}" 폴더를 삭제할까요?` : `"${name}" 파일을 삭제할까요?`;
   if (!confirm(msg)) return;
 
   const res = await fetch("/local/api/delete", {
