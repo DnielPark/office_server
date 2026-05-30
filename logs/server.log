@@ -1,6 +1,0 @@
-2026-05-31 01:10:25 [INFO] → POST /auth/sungsan1 (127.0.0.1)
-2026-05-31 01:10:25 [INFO] ← 200 POST /auth/sungsan1
-2026-05-31 01:10:25 [INFO] → POST /upload/sungsan1 (127.0.0.1)
-2026-05-31 01:10:25 [INFO] ← 302 POST /upload/sungsan1
-2026-05-31 01:10:25 [INFO] → GET /auth/sungsan1 (127.0.0.1)
-2026-05-31 01:10:25 [INFO] ← 200 GET /auth/sungsan1

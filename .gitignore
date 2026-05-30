@@ -31,3 +31,6 @@ local_tokens.json
 # Test files
 *.py
 !file_server_external.py
+
+# Server logs
+logs/
