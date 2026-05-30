@@ -416,24 +416,13 @@ def files(project_key, subpath):
         usage=get_project_usage(project_key),
     )
 
-# ─────────────────────────────────────────────
-# 내부망 전용 (IP 인증 없음)
-# ─────────────────────────────────────────────
-LOCAL_PREFIXES = ["127.0.0.1", "192.168.", "10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31."]
-
-def is_local_ip():
-    # Cloudflare Tunnel → CF-Connecting-IP 헤더에 실제 IP 전달
-    real_ip = request.headers.get("CF-Connecting-IP") or request.remote_addr or ""
-    return any(real_ip.startswith(p) for p in LOCAL_PREFIXES)
-
 
 @app.route("/local", defaults={"subpath": ""})
 @app.route("/local/<path:subpath>")
 def local_browse(subpath):
-    if not is_local_ip():
-        token = get_token_from_request()
-        if not token or not get_email_by_token(token):
-            return redirect(url_for("local_auth"))
+    token = get_token_from_request()
+    if not token or not get_email_by_token(token):
+        return redirect(url_for("local_auth"))
 
     target = safe_path(SHARED_FOLDER, subpath)
 
@@ -463,7 +452,7 @@ LOCAL_BACKUP = SHARED_FOLDER / ".backup"
 @app.route("/local-upload/<path:subpath>", methods=["POST"])
 def local_upload(subpath):
     token = get_token_from_request()
-    if not get_email_by_token(token) and not is_local_ip():
+    if not token or not get_email_by_token(token):
         return redirect(url_for("local_auth"))
 
     target = safe_path(SHARED_FOLDER, subpath)
@@ -488,7 +477,7 @@ def local_upload(subpath):
 @app.route("/local/api/mkdir", methods=["POST"])
 def local_api_mkdir():
     token = get_token_from_request()
-    if not get_email_by_token(token) and not is_local_ip():
+    if not token or not get_email_by_token(token):
         return jsonify({"ok": False, "msg": "인증이 필요합니다."}), 401
 
     data = request.get_json(force=True)
@@ -512,7 +501,7 @@ def local_api_mkdir():
 @app.route("/local/api/delete", methods=["POST"])
 def local_api_delete():
     token = get_token_from_request()
-    if not get_email_by_token(token) and not is_local_ip():
+    if not token or not get_email_by_token(token):
         return jsonify({"ok": False, "msg": "인증이 필요합니다."}), 401
 
     data = request.get_json(force=True)
