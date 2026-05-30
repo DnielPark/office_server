@@ -114,14 +114,17 @@ body {
     <span class="auth-icon">🔒</span>
     <div class="auth-title">{{ project_name }}</div>
     <div class="auth-sub">이 프로젝트는 비밀번호로 보호되어 있습니다.</div>
-    {% if blocked %}
-    <div class="error-msg" style="margin-bottom: 16px;">⛔ 너무 많은 로그인 시도로 <strong>{{ LOGIN_BLOCK_MINUTES }}분</strong> 동안 차단되었습니다.</div>
-    {% else %}
     <form method="POST">
-      <div class="field">
-        <label>비밀번호</label>
-        <input type="password" name="password" placeholder="••••••••" autofocus required>
+      {% if challenge %}
+      <div class="field" style="margin-bottom:6px">
+        <label>🤖 로봇이 아닙니다. 다음 문제를 풀어주세요</label>
+        <div style="font-size:24px;font-weight:700;text-align:center;padding:12px;color:var(--accent);font-family:'IBM Plex Mono',monospace;">{{ challenge }}</div>
+        <input type="text" name="challenge_answer" placeholder="정답 입력" autofocus required style="text-align:center;font-size:18px;font-family:'IBM Plex Mono',monospace;">
       </div>
+      {% endif %}
+      <div class="field" {% if challenge %}style="margin-top:12px"{% endif %}>
+        <label>비밀번호</label>
+        <input type="password" name="password" placeholder="••••••••" {% if not challenge %}autofocus{% endif %} required>
       <button type="submit" class="btn-submit">접속하기</button>
       {% if error %}
       <div class="error-msg">⚠ 비밀번호가 올바르지 않습니다.</div>

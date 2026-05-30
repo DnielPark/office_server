@@ -9,7 +9,7 @@ from flask import (Flask, render_template, send_from_directory, send_file,
 from pathlib import Path
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import secrets, os, io, zipfile, json, smtplib, ssl
+import secrets, os, io, zipfile, json, smtplib, ssl, random
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -317,35 +317,20 @@ def get_project_usage(project_key: str) -> dict:
         "free_str": fmt_size(max_bytes - used) if used <= max_bytes else "0 B",
     }
 
-# ── 브루트포스 방어 ───────────────────────────
-LOGIN_ATTEMPTS = {}  # {"ip:project": {"count": n, "blocked_until": ts}}
-MAX_LOGIN_ATTEMPTS = 5
-LOGIN_BLOCK_MINUTES = 15
+# ── 로그인 보안 (자동화 방어) ───────────────
+MAX_LOGIN_ATTEMPTS = 3  # 3회 실패 시 덧셈 문제 출제
 
-def check_login_blocked(ip, project_key):
-    key = f"{ip}:{project_key}"
-    record = LOGIN_ATTEMPTS.get(key)
-    if record and record.get("blocked_until"):
-        if _time.time() < record["blocked_until"]:
-            return True
-        else:
-            LOGIN_ATTEMPTS.pop(key, None)
-    return False
+def generate_math_challenge():
+    """두자리수 덧셈 문제 생성"""
+    a = random.randint(10, 99)
+    b = random.randint(1, 50)
+    answer = a + b
+    return {"question": f"{a} + {b} = ?", "answer": str(answer)}
 
-def record_login_fail(ip, project_key):
-    key = f"{ip}:{project_key}"
-    now = _time.time()
-    record = LOGIN_ATTEMPTS.get(key, {"count": 0})
-    record["count"] += 1
-    if record["count"] >= MAX_LOGIN_ATTEMPTS:
-        record["blocked_until"] = now + LOGIN_BLOCK_MINUTES * 60
-        logging.warning(f"[BRUTE] {ip} → {project_key} 차단됨 ({LOGIN_BLOCK_MINUTES}분)")
-    record["last_fail"] = now
-    LOGIN_ATTEMPTS[key] = record
-
-def record_login_success(ip, project_key):
-    key = f"{ip}:{project_key}"
-    LOGIN_ATTEMPTS.pop(key, None)
+def needs_challenge(project_key):
+    """현재 세션에서 로그인 시도 횟수 확인"""
+    key = f"login_fails_{project_key}"
+    return session.get(key, 0) >= MAX_LOGIN_ATTEMPTS
 
 # ─────────────────────────────────────────────
 # 페이지 라우트
@@ -361,22 +346,41 @@ def auth(project_key):
 
     info = PROJECTS[project_key]
     error = False
-    blocked = False
+    challenge = None
+    fail_key = f"login_fails_{project_key}"
 
-    # 브루트포스 차단 확인
-    ip = request.remote_addr or ""
     if request.method == "POST":
-        if check_login_blocked(ip, project_key):
-            blocked = True
+        password = request.form.get("password", "")
+        user_answer = request.form.get("challenge_answer", "")
+        challenge_answer = session.pop(f"challenge_{project_key}", None)
+
+        # 챌린지 검증 (진행 중이면 먼저 확인)
+        if challenge_answer is not None:
+            if user_answer == challenge_answer:
+                # 챌린지 통과 → 비밀번호 검증
+                if password == info["password"]:
+                    session.pop(fail_key, None)
+                    session[f"auth_{project_key}"] = True
+                    return redirect(url_for("files", project_key=project_key))
+                error = True
+            else:
+                error = True  # 챌린지 오답 → 새 문제
         else:
-            if request.form.get("password", "") == info["password"]:
-                record_login_success(ip, project_key)
+            # 일반 로그인 시도
+            if password == info["password"]:
+                session.pop(fail_key, None)
                 session[f"auth_{project_key}"] = True
                 return redirect(url_for("files", project_key=project_key))
             error = True
-            record_login_fail(ip, project_key)
+            session[fail_key] = session.get(fail_key, 0) + 1
 
-    return render_template("auth.html", project_name=info["name"], error=error, blocked=blocked, LOGIN_BLOCK_MINUTES=LOGIN_BLOCK_MINUTES)
+        # 챌린지 필요 여부
+        if needs_challenge(project_key):
+            ch = generate_math_challenge()
+            challenge = ch["question"]
+            session[f"challenge_{project_key}"] = ch["answer"]
+
+    return render_template("auth.html", project_name=info["name"], error=error, challenge=challenge)
 
 @app.route("/files/<project_key>", defaults={"subpath": ""})
 @app.route("/files/<project_key>/<path:subpath>")
