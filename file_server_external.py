@@ -7,12 +7,9 @@ file_server_external.py  —  대외용 웹 파일 서버
 from flask import (Flask, render_template, send_from_directory, send_file,
                    request, redirect, url_for, session, abort, jsonify, make_response)
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 import secrets, os, io, zipfile, json, smtplib, ssl, random
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
@@ -101,7 +98,7 @@ def load_tokens():
     try:
         with open(TOKENS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    except:
+    except Exception:
         return {"allowed_emails": [], "tokens": {}, "pending_verifications": {}}
 
 def save_tokens(data):
@@ -270,7 +267,7 @@ def decode_filename(fname):
     if "?" in fname or "\ufffd" in fname:
         try:
             return fname.encode("latin-1").decode("cp949")
-        except:
+        except (UnicodeEncodeError, UnicodeDecodeError, LookupError):
             pass
     return fname
 
@@ -288,7 +285,7 @@ def get_folder_size(path: Path) -> int:
                 continue
             if item.is_file():
                 total += item.stat().st_size
-    except:
+    except (PermissionError, OSError):
         pass
     return total
 
@@ -654,8 +651,6 @@ def not_found(_):
 # ─────────────────────────────────────────────
 # 로컬 폴더 이메일 인증 라우트
 # ─────────────────────────────────────────────
-
-import time
 
 
 @app.route("/local/auth")
