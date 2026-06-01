@@ -336,6 +336,11 @@ def needs_challenge(project_key):
 def index():
     return render_template("index.html", projects=PROJECTS)
 
+
+@app.route("/devnote")
+def devnote():
+    return render_template("devnote.html", projects=PROJECTS)
+
 @app.route("/auth/<project_key>", methods=["GET", "POST"])
 def auth(project_key):
     if project_key not in PROJECTS:
