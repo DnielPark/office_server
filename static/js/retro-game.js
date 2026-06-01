@@ -193,10 +193,14 @@ const RetroGame = (function() {
       obstacleTimer = Math.max(30, Math.floor(gap / speed));
     }
 
-    // 장애물 이동
+    // 장애물 이동 (좌우로 흔들리는 장애물 포함)
     for (var i = obstacles.length - 1; i >= 0; i--) {
-      obstacles[i].x -= speed;
-      if (obstacles[i].x + OBS_W < 0) {
+      var o = obstacles[i];
+      o.x -= speed;
+      if (o.oscAmp > 0) {
+        o.y = o.baseY + Math.sin(frame * 0.045 + o.oscPhase) * o.oscAmp;
+      }
+      if (o.x + OBS_W < 0) {
         obstacles.splice(i, 1);
       }
     }
@@ -251,10 +255,14 @@ const RetroGame = (function() {
 
   function spawnObstacle() {
     var h = MIN_OBS_H + Math.random() * (MAX_OBS_H - MIN_OBS_H);
+    var isMoving = Math.random() < 0.45;
     obstacles.push({
       x: W,
+      baseY: GROUND_Y - h,
       y: GROUND_Y - h,
-      h: h
+      h: h,
+      oscAmp: isMoving ? 8 + Math.random() * 12 : 0,
+      oscPhase: Math.random() * Math.PI * 2
     });
   }
 
@@ -322,11 +330,19 @@ const RetroGame = (function() {
     // 장애물
     for (var j = 0; j < obstacles.length; j++) {
       var o = obstacles[j];
-      ctx.fillStyle = '#2f81f7';
+      var moving = o.oscAmp > 0;
+      ctx.fillStyle = moving ? '#d29922' : '#2f81f7';
       ctx.fillRect(o.x, o.y, OBS_W, o.h);
       // 하이라이트
-      ctx.fillStyle = 'rgba(47,129,247,0.25)';
+      ctx.fillStyle = moving ? 'rgba(210,153,34,0.25)' : 'rgba(47,129,247,0.25)';
       ctx.fillRect(o.x + 2, o.y + 3, OBS_W - 4, Math.max(2, o.h * 0.12));
+      if (moving) {
+        // 움직이는 장애물 표시 (화살표)
+        var arrowY = o.y + o.h * 0.2;
+        ctx.fillStyle = 'rgba(210,153,34,0.5)';
+        ctx.fillRect(o.x + 4, arrowY, OBS_W - 8, 2);
+        ctx.fillRect(o.x + 4, arrowY + 4, OBS_W - 8, 2);
+      }
     }
 
     // 봇
