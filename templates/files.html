@@ -148,7 +148,7 @@ a { color: var(--accent); text-decoration: none; }
   z-index: 9;
 }
 .mobile-dropdown.open { display: flex; }
-.mobile-dropdown .tb-btn, .mobile-dropdown .logout-btn { font-size: 12px; padding: 5px 12px; }
+.mobile-dropdown { padding: 6px 16px; justify-content: center; }
 
 /* 모바일 고정 푸터 */
 .mobile-footer {
@@ -551,14 +551,8 @@ a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
-<!-- 모바일 드롭다운 -->
+<!-- 모바일 드롭다운 (설정) -->
 <div class="mobile-dropdown" id="mobile-dropdown">
-  <button class="tb-btn upload" onclick="handleUploadClick()">📤 업로드</button>
-  <button class="tb-btn primary" onclick="openMkdirModal()">📁 새 폴더</button>
-  <button class="tb-btn dim" id="dl-selected-btn-m" onclick="doDownloadSelected()">📦 선택 다운로드</button>
-  <button class="tb-btn dim" id="dl-delete-btn-m" onclick="doDeleteSelected()">🗑 선택 삭제</button>
-  <button class="tb-btn dim" id="move-btn-m" onclick="openFolderModal('move')">선택 이동</button>
-  <button class="tb-btn dim" id="copy-btn-m" onclick="openFolderModal('copy')">선택 복사</button>
   <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
   <a class="logout-btn" href="/logout/{{ project_key }}">🚪 로그아웃</a>
 </div>
@@ -778,11 +772,6 @@ function updateDL() {
     var el = document.getElementById(id);
     if (el) el.classList.toggle("dim", count === 0);
   });
-  // 모바일 드롭다운 버튼
-  ["dl-selected-btn-m","dl-delete-btn-m"].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.toggle("dim", count === 0);
-  });
   // 모바일 푸터 링크 (클릭 방지를 위해 opacity 처리)
   ["dl-footer-m","dl-delete-footer-m","move-footer-m","copy-footer-m"].forEach(function(id) {
     var el = document.getElementById(id);
@@ -905,7 +894,7 @@ var _selectedDest = null;
 // 체크박스 변경 시 이동/복사 버튼 활성화
 function updateMoveCopy() {
   var count = document.querySelectorAll(".file-check-item:checked").length;
-  ["move-btn-t","copy-btn-t","move-btn-m","copy-btn-m"].forEach(function(id) {
+  ["move-btn-t","copy-btn-t"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.classList.toggle("dim", count === 0);
   });
