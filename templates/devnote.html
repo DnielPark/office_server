@@ -9,140 +9,157 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:      #0d1117;
-  --surface: #161b22;
-  --border:  #30363d;
-  --accent:  #2f81f7;
-  --accent2: #388bfd;
-  --text:    #e6edf3;
-  --muted:   #8b949e;
+ --bg: #0d1117;
+ --surface: #161b22;
+ --border: #30363d;
+ --accent: #2f81f7;
+ --accent2: #388bfd;
+ --text: #e6edf3;
+ --muted: #8b949e;
 }
 body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
+ font-family: 'Noto Sans KR', sans-serif;
+ background: var(--bg);
+ color: var(--text);
+ min-height: 100vh;
+ overflow-x: hidden;
 }
 a { color: var(--accent); text-decoration: none; }
 
+/* ── 파티클 캔버스 ── */
+#particle-canvas {
+ position: fixed;
+ top: 0; left: 0;
+ width: 100%; height: 100%;
+ z-index: 0;
+ pointer-events: none;
+}
+
 .wrapper {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 60px 24px 80px;
+ position: relative;
+ z-index: 1;
+ max-width: 960px;
+ margin: 0 auto;
+ padding: 60px 24px 80px;
 }
 
 /* 헤더 */
 .site-header { text-align: center; margin-bottom: 64px; }
 .logo-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
+ display: inline-flex;
+ align-items: center;
+ gap: 14px;
+ margin-bottom: 20px;
 }
 .logo-icon {
-  width: 52px; height: 52px;
-  background: linear-gradient(135deg, #2f81f7 0%, #388bfd 100%);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-  box-shadow: 0 4px 20px rgba(47,129,247,0.35);
+ width: 52px; height: 52px;
+ background: linear-gradient(135deg, #2f81f7 0%, #388bfd 100%);
+ border-radius: 14px;
+ display: flex; align-items: center; justify-content: center;
+ font-size: 26px;
+ box-shadow: 0 4px 20px rgba(47,129,247,0.35);
 }
 .logo-text { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 .logo-sub {
-  font-size: 13px;
-  color: var(--muted);
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
-  margin-top: 4px;
+ font-size: 13px;
+ color: var(--muted);
+ font-family: 'IBM Plex Mono', monospace;
+ letter-spacing: 0.08em;
+ margin-top: 4px;
 }
 .header-divider {
-  width: 48px; height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  margin: 24px auto 0;
+ width: 48px; height: 2px;
+ background: linear-gradient(90deg, var(--accent), transparent);
+ margin: 24px auto 0;
 }
 
 /* 섹션 */
 .section-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--muted);
-  text-transform: uppercase;
-  font-family: 'IBM Plex Mono', monospace;
-  margin-bottom: 20px;
+ font-size: 11px;
+ font-weight: 600;
+ letter-spacing: 0.18em;
+ color: var(--muted);
+ text-transform: uppercase;
+ font-family: 'IBM Plex Mono', monospace;
+ margin-bottom: 20px;
 }
 
 /* 카드 */
 .card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ gap: 16px;
 }
 .project-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px 24px;
-  position: relative;
-  overflow: hidden;
-  display: block;
-  color: var(--text);
-  transition: border-color .18s, transform .18s, box-shadow .18s;
+ background: rgba(22,27,34,0.75);
+ backdrop-filter: blur(8px);
+ -webkit-backdrop-filter: blur(8px);
+ border: 1px solid var(--border);
+ border-radius: 12px;
+ padding: 28px 24px;
+ position: relative;
+ overflow: hidden;
+ display: block;
+ color: var(--text);
+ transition: border-color .18s, transform .18s, box-shadow .18s;
 }
 .project-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  opacity: 0;
-  transition: opacity .18s;
+ content: '';
+ position: absolute;
+ top: 0; left: 0; right: 0;
+ height: 2px;
+ background: linear-gradient(90deg, var(--accent), transparent);
+ opacity: 0;
+ transition: opacity .18s;
 }
 .project-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(47,129,247,0.15);
-  color: var(--text);
+ border-color: var(--accent);
+ transform: translateY(-3px);
+ box-shadow: 0 8px 24px rgba(47,129,247,0.15);
+ color: var(--text);
 }
 .project-card:hover::before { opacity: 1; }
 
 .card-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  background: rgba(47,129,247,0.12);
-  color: var(--accent);
-  border: 1px solid rgba(47,129,247,0.25);
-  border-radius: 4px;
-  padding: 2px 8px;
-  margin-bottom: 16px;
+ display: inline-block;
+ font-size: 10px;
+ font-family: 'IBM Plex Mono', monospace;
+ font-weight: 500;
+ letter-spacing: 0.1em;
+ background: rgba(47,129,247,0.12);
+ color: var(--accent);
+ border: 1px solid rgba(47,129,247,0.25);
+ border-radius: 4px;
+ padding: 2px 8px;
+ margin-bottom: 16px;
 }
 .card-name { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 8px; }
 .card-desc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .card-arrow {
-  position: absolute;
-  bottom: 20px; right: 20px;
-  font-size: 18px;
-  color: var(--border);
-  transition: color .18s, right .18s;
+ position: absolute;
+ bottom: 20px; right: 20px;
+ font-size: 18px;
+ color: var(--border);
+ transition: color .18s, right .18s;
 }
 .project-card:hover .card-arrow { color: var(--accent); right: 16px; }
 
 /* 푸터 */
 .site-footer {
-  text-align: center;
-  margin-top: 72px;
-  font-size: 12px;
-  color: var(--muted);
-  font-family: 'IBM Plex Mono', monospace;
-  border-top: 1px solid var(--border);
-  padding-top: 28px;
+ text-align: center;
+ margin-top: 72px;
+ font-size: 12px;
+ color: var(--muted);
+ font-family: 'IBM Plex Mono', monospace;
+ border-top: 1px solid var(--border);
+ padding-top: 28px;
 }
 </style>
 </head>
 <body>
+
+<canvas id="particle-canvas"></canvas>
+
 <div class="wrapper">
   <header class="site-header">
     <div class="logo-mark">
@@ -173,8 +190,80 @@ a { color: var(--accent); text-decoration: none; }
 <br>
 관리자 : 박대호 &nbsp;·&nbsp; daeho1001@nate.com
 <br><br>
-
   </footer>
 </div>
+
+<script>
+// ── 파티클 애니메이션 ──
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const MIN_DIST = 120;
+const PARTICLE_COUNT = 60;
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = Math.random() * 2 + 1;
+    this.speedX = (Math.random() - 0.5) * 0.5;
+    this.speedY = (Math.random() - 0.5) * 0.5;
+    this.opacity = Math.random() * 0.5 + 0.15;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > W) this.speedX *= -1;
+    if (this.y < 0 || this.y > H) this.speedY *= -1;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(47, 129, 247, ${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+const particles = [];
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+function connect() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < MIN_DIST) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(47, 129, 247, ${0.08 * (1 - dist / MIN_DIST)})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+  connect();
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
 </body>
 </html>
