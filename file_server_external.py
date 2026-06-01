@@ -123,8 +123,16 @@ def _append_history(action: str, project: str, ip: str, original: str,
         logging.error(f"file_history 기록 실패: {e}")
 
 
+load_dotenv()  # .env 로드 — app.secret_key 보다 먼저 실행되어야 함
+
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
+_sk = os.getenv("SECRET_KEY")
+if not _sk:
+    logging.warning("SECRET_KEY 미설정 — 임시 키 사용. 재시작 시 세션이 풀립니다. .env에 SECRET_KEY를 고정하세요.")
+    _sk = secrets.token_hex(32)
+app.secret_key = _sk
+# 업로드 하드 상한 (백스톱). 정상 100MB + 멀티파트 오버헤드 여유 10MB.
+app.config['MAX_CONTENT_LENGTH'] = 110 * 1024 * 1024
 
 # ── 요청 로깅 ────────────────────────────────
 @app.before_request
@@ -142,9 +150,6 @@ def log_response(response):
     return response
 
 SHARED_FOLDER = Path(r"E:\openshare")
-
-# ── .env 로드 ─────────────────────────────────
-load_dotenv()
 
 # ── 시작 시 .env 누락 키 점검 ─────────────────
 REQUIRED_KEYS = ["SUNGSAN1_PW", "SUNGSAN2_PW", "GUDONG1_PW", "GUDONG2_PW"]
@@ -721,6 +726,11 @@ def forbidden(_):
 @app.errorhandler(404)
 def not_found(_):
     return redirect(url_for("index"))
+
+
+@app.errorhandler(413)
+def too_large(_):
+    return "업로드 용량이 너무 큽니다 (최대 100MB).", 413
 
 # ─────────────────────────────────────────────
 # 로컬 폴더 이메일 인증 라우트
