@@ -169,21 +169,21 @@ a { color: var(--accent); text-decoration: none; }
 }
 .upload-btn:hover { background: var(--accent2); }
 
-/* 폴더 생성 */
-.mkdir-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 220px;
+/* 폴더 생성 트리거 */
+.mkdir-trigger-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
 }
-.mkdir-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.mkdir-trigger-btn:hover { background: var(--accent); color: #fff; }
 .mkdir-input {
-  flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -192,23 +192,9 @@ a { color: var(--accent); text-decoration: none; }
   font-family: 'IBM Plex Mono', monospace;
   padding: 7px 10px;
   outline: none;
-  min-width: 0;
   transition: border-color .15s;
 }
 .mkdir-input:focus { border-color: var(--accent); }
-.mkdir-btn {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 7px 14px;
-  font-size: 13px;
-  font-family: 'Noto Sans KR', sans-serif;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, color .15s;
-}
-.mkdir-btn:hover { background: var(--accent); color: #fff; }
 
 /* 파일 테이블 */
 .file-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -489,11 +475,7 @@ a { color: var(--accent); text-decoration: none; }
     </form>
 
     <!-- 폴더 생성 -->
-    <div class="mkdir-section">
-      <span class="mkdir-label">📁 새 폴더</span>
-      <input class="mkdir-input" id="mkdir-input" type="text" placeholder="폴더명 입력">
-      <button class="mkdir-btn" onclick="doMkdir()">생성</button>
-    </div>
+    <button class="mkdir-trigger-btn" onclick="openMkdirModal()">📁 새 폴더</button>
 
     <!-- 선택 다운로드 -->
     <button class="dl-selected-btn" id="dl-selected-btn" onclick="doDownloadSelected()">📦 선택 다운로드</button>
@@ -581,6 +563,23 @@ a { color: var(--accent); text-decoration: none; }
   </div>
 </div>
 
+<!-- 새 폴더 모달 -->
+<div class="modal-overlay" id="mkdir-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <span>📁 새 폴더 만들기</span>
+      <button class="modal-close" onclick="closeMkdirModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <input class="mkdir-input" id="mkdir-input" type="text" placeholder="폴더명 입력" style="width:100%">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeMkdirModal()">취소</button>
+      <button class="btn-confirm" onclick="doMkdir()">생성</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const PROJECT_KEY  = "{{ project_key }}";
 const CURRENT_PATH = "{{ current_path }}";
@@ -627,6 +626,7 @@ async function doMkdir() {
   const data = await res.json();
   if (data.ok) {
     input.value = "";
+    closeMkdirModal();
     showToast(data.msg, "success");
     setTimeout(() => location.reload(), 800);
   } else {
@@ -705,6 +705,16 @@ async function doDownloadSelected() {
   document.querySelectorAll(".file-check-item").forEach(cb => cb.checked = false);
   document.getElementById("check-all").checked = false;
   updateDL();
+}
+
+// ── 새 폴더 모달 ──
+function openMkdirModal() {
+  document.getElementById("mkdir-modal").classList.add("open");
+  setTimeout(() => document.getElementById("mkdir-input").focus(), 50);
+}
+function closeMkdirModal() {
+  document.getElementById("mkdir-modal").classList.remove("open");
+  document.getElementById("mkdir-input").value = "";
 }
 
 // Enter 키로 폴더 생성
