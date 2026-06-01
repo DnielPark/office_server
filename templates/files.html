@@ -745,10 +745,6 @@ async function loadFolderTree(subpath, containerEl) {
   var container = containerEl || document.getElementById("modal-body");
 
   try {
-    var res = await fetch("/files/" + PROJECT_KEY + "/" + subpath, { headers: { "X-Requested-With": "fetch" } });
-    if (!res.ok) { container.innerHTML = "<div class=\"folder-loading\">⚠ 폴더 로딩 실패</div>"; return; }
-    var html = await res.text();
-    // Parse folder names from the HTML (simplified: fetch the JSON endpoint instead)
     var foldersRes = await fetch("/api/list-dirs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
