@@ -485,10 +485,14 @@ a { color: var(--accent); text-decoration: none; }
         {% endfor %}
       </div>
     </div>
-    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
+      <a class="logout-btn" href="/logout/{{ project_key }}">🚪 로그아웃</a>
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+    </div>
   </div>
 
-  <!-- 2줄: 액션 버튼 + 로그아웃 -->
+  <!-- 2줄: 액션 버튼 -->
   <div class="topbar-row2" id="topbar-row2">
     <form id="upload-form" method="POST"
           action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
@@ -501,8 +505,6 @@ a { color: var(--accent); text-decoration: none; }
     <button class="tb-btn danger dim" id="dl-delete-btn-t" onclick="doDeleteSelected()">🗑 선택 삭제</button>
     <button class="tb-btn dim" id="move-btn-t" onclick="openFolderModal('move')">↗ 이동</button>
     <button class="tb-btn dim" id="copy-btn-t" onclick="openFolderModal('copy')">📋 복사</button>
-    <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
-    <a class="logout-btn" href="/logout/{{ project_key }}">🚪 로그아웃</a>
   </div>
 </div>
 
