@@ -372,7 +372,7 @@ const RetroGame = (function() {
       ctx.fillText('▶  SPACE to start', W / 2, H / 2 + 4);
       ctx.fillStyle = '#8b949e';
       ctx.font = '10px "IBM Plex Mono", monospace';
-      ctx.fillText('Space / ↑  jump  ·  ↓  duck', W / 2, H / 2 + 26);
+      ctx.fillText('Space/↑ jump  ·  ↓ duck  ·  ← → move', W / 2, H / 2 + 26);
     }
 
     if (state === 'gameover') {
