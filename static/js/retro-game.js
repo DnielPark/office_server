@@ -17,6 +17,10 @@ const RetroGame = (function() {
   var OBS_W      = 14;
   var GAP_MIN    = 0.35;             // screen width fraction
   var GAP_MAX    = 0.65;
+  var COIN_R     = 5;                // 동전 반지름
+  var COIN_SCORE = 10;              // 동전당 점수
+  var COIN_Y_BOT = 8;               // 동전 최저 높이 (GROUND_Y 기준, 아래)
+  var COIN_Y_TOP = 65;              // 동전 최고 높이 (더블점프 피크)
 
   /* ── 상태 ── */
   var canvas, ctx, W;
@@ -28,6 +32,9 @@ const RetroGame = (function() {
   var bot = {};
   var obstacles = [];
   var obstacleTimer = 0;
+  var coins = [];
+  var coinTimer = 0;
+  var coinCount = 0;
   var animId = null;
   var containerEl = null;
 
@@ -69,6 +76,9 @@ const RetroGame = (function() {
     frame = 0;
     obstacles = [];
     obstacleTimer = 0;
+    coins = [];
+    coinTimer = 0;
+    coinCount = 0;
     resetBotState();
   }
 
@@ -191,6 +201,21 @@ const RetroGame = (function() {
       }
     }
 
+    // 동전 생성
+    coinTimer--;
+    if (coinTimer <= 0) {
+      spawnCoin();
+      coinTimer = 60 + Math.floor(Math.random() * 80);
+    }
+
+    // 동전 이동
+    for (var ci = coins.length - 1; ci >= 0; ci--) {
+      coins[ci].x -= speed;
+      if (coins[ci].x + COIN_R * 2 < 0) {
+        coins.splice(ci, 1);
+      }
+    }
+
     // 충돌 검사 (bot.y 기준)
     var bw = bot.ducking ? BOT_W + 6 : BOT_W;
     var bh = bot.ducking ? BOT_H * 0.45 : BOT_H;
@@ -209,6 +234,19 @@ const RetroGame = (function() {
         }
       }
     }
+
+    // 동전 수집
+    var collectR = COIN_R + 4;  // 여유 있는 수집 범위
+    for (var ci = coins.length - 1; ci >= 0; ci--) {
+      var c = coins[ci];
+      var dx = (bot.x + BOT_W / 2) - c.x;
+      var dy = (bot.y - BOT_H / 2) - c.y;
+      if (Math.abs(dx) < collectR + BOT_W / 2 && Math.abs(dy) < collectR + BOT_H / 2) {
+        score += COIN_SCORE;
+        coinCount++;
+        coins.splice(ci, 1);
+      }
+    }
   }
 
   function spawnObstacle() {
@@ -217,6 +255,14 @@ const RetroGame = (function() {
       x: W,
       y: GROUND_Y - h,
       h: h
+    });
+  }
+
+  function spawnCoin() {
+    var cy = GROUND_Y - (COIN_Y_BOT + Math.random() * (COIN_Y_TOP - COIN_Y_BOT));
+    coins.push({
+      x: W + 10,
+      y: cy
     });
   }
 
@@ -248,6 +294,28 @@ const RetroGame = (function() {
       ctx.fillRect(ox + 9, GROUND_Y + 13, 2, 2);
     }
 
+    // 동전
+    var pulse = Math.sin(frame * 0.08) * 0.25 + 0.75;
+    for (var ci = 0; ci < coins.length; ci++) {
+      var c = coins[ci];
+      // 외부 광택
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, COIN_R + 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,215,0,0.12)';
+      ctx.fill();
+      // 동전 본체
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, COIN_R, 0, Math.PI * 2);
+      var glow = Math.floor(200 + 55 * pulse);
+      ctx.fillStyle = 'rgb(255,' + glow + ',0)';
+      ctx.fill();
+      // 내부 하이라이트
+      ctx.beginPath();
+      ctx.arc(c.x - 1, c.y - 1, COIN_R * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,200,0.5)';
+      ctx.fill();
+    }
+
     // 장애물
     for (var j = 0; j < obstacles.length; j++) {
       var o = obstacles[j];
@@ -267,6 +335,14 @@ const RetroGame = (function() {
       ctx.font = '11px "IBM Plex Mono", monospace';
       ctx.textAlign = 'right';
       ctx.fillText('SCORE ' + score, W - 12, 18);
+      // 동전 아이콘 + 점수
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('🪙', 10, 17);
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.fillText('x' + coinCount, 24, 17);
     }
 
     // 상태 오버레이
