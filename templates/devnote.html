@@ -158,12 +158,12 @@ a { color: var(--accent); text-decoration: none; }
   <p class="section-label">프로젝트 선택</p>
   <div class="card-grid">
     {% for key, info in projects.items() %}
-    <a class="project-card" href="/auth/{{ key }}">
+    <div class="project-card">
       <div class="card-badge">{{ key }}</div>
       <div class="card-name">{{ info.name }}</div>
       <div class="card-desc"><span>🔒</span><span>비밀번호 필요</span></div>
       <div class="card-arrow">→</div>
-    </a>
+    </div>
     {% endfor %}
 
   </div>
@@ -171,11 +171,9 @@ a { color: var(--accent); text-decoration: none; }
   <footer class="site-footer">
 © 2026 성산천 사업관리단 &nbsp;·&nbsp; 내부 자료 공유 전용
 <br>
-관리자 : 박대호 &nbsp;·&nbsp; <a href="mailto:daeho1001@nate.com" style="color: var(--muted);">daeho1001@nate.com</a>
+관리자 : 박대호 &nbsp;·&nbsp; daeho1001@nate.com
 <br><br>
-<a href="/local" style="color: var(--muted); font-size: 11px;">📂 로컬 폴더</a>
-&nbsp;·&nbsp;
-<a href="/local/admin" style="color: var(--muted); font-size: 11px;">🔐 관리</a>
+
   </footer>
 </div>
 </body>
