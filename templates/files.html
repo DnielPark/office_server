@@ -865,16 +865,11 @@ var _selectedDest = null;
 // 체크박스 변경 시 이동/복사 버튼 활성화
 function updateMoveCopy() {
   var count = document.querySelectorAll(".file-check-item:checked").length;
-  document.getElementById("move-btn").classList.toggle("active", count > 0);
-  document.getElementById("copy-btn").classList.toggle("active", count > 0);
-  var t = document.getElementById("move-btn-t");
-  var c = document.getElementById("copy-btn-t");
-  if (t) t.classList.toggle("dim", count === 0);
-  if (c) c.classList.toggle("dim", count === 0);
-  var m = document.getElementById("move-btn-m");
-  var v = document.getElementById("copy-btn-m");
-  if (m) m.classList.toggle("dim", count === 0);
-  if (v) v.classList.toggle("dim", count === 0);
+  var ids = ["move-btn-t","copy-btn-t","move-btn-m","copy-btn-m"];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle("dim", count === 0);
+  });
 }
 
 // updateDL()에 연결
