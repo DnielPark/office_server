@@ -622,6 +622,8 @@ def upload(project_key, subpath):
             continue
         try:
             f.save(str(target / Path(fname).name))
+            _append_history("upload", project_key, request.remote_addr,
+                            f"{project_key}/{subpath}/{fname}" if subpath else f"{project_key}/{fname}")
         except OSError:
             errors.append(f"'{fname}' 파일을 저장할 수 없습니다. 파일명을 확인해주세요.")
 
@@ -953,6 +955,8 @@ def api_mkdir():
 
     try:
         new_folder.mkdir(parents=False)
+        _append_history("mkdir", project_key, request.remote_addr,
+                        f"{project_key}/{subpath}/{folder_name}" if subpath else f"{project_key}/{folder_name}")
         return jsonify({"ok": True, "msg": f"'{folder_name}' 폴더가 생성되었습니다."})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
@@ -976,7 +980,9 @@ def api_delete():
         return jsonify({"ok": False, "msg": "존재하지 않는 파일/폴더입니다."})
 
     try:
-        _backup_to_dotbackup(base, target)
+        backup_path = _backup_to_dotbackup(base, target)
+        _append_history("delete", project_key, request.remote_addr,
+                        subpath, backup=str(backup_path))
         return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동했습니다."})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
@@ -1003,7 +1009,9 @@ def api_delete_selected():
             errors.append(f"'{target.name}' 없음")
             continue
         try:
-            _backup_to_dotbackup(base, target)
+            backup_path = _backup_to_dotbackup(base, target)
+            _append_history("delete", project_key, request.remote_addr,
+                            subpath, backup=str(backup_path))
             success_count += 1
         except Exception as e:
             errors.append(f"'{target.name}': {e}")
@@ -1121,6 +1129,8 @@ def api_move():
 
         try:
             shutil.move(str(src), str(target))
+            _append_history("move", project_key, request.remote_addr,
+                            p, extra={"dest": dest})
         except Exception as e:
             return jsonify({"ok": False, "msg": f"'{src.name}' 이동 실패: {e}"})
 
@@ -1175,6 +1185,9 @@ def api_copy():
                 shutil.copy2(str(src), str(target))
             else:
                 shutil.copytree(str(src), str(target))
+            _append_history("copy", project_key, request.remote_addr,
+                            p, extra={"dest": dest,
+                                      "renamed": target.name if was_renamed else None})
         except Exception as e:
             return jsonify({"ok": False, "msg": f"{idx+1}번째 '{src.name}' 복사 실패: {e}"})
 
