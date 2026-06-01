@@ -45,8 +45,15 @@ a { color: var(--accent); text-decoration: none; }
 .topbar-row2 {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   padding: 0 16px 8px;
+  flex-wrap: wrap;
+}
+.topbar-row2 .action-left, .topbar-row2 .action-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -494,17 +501,21 @@ a { color: var(--accent); text-decoration: none; }
 
   <!-- 2줄: 액션 버튼 -->
   <div class="topbar-row2" id="topbar-row2">
-    <form id="upload-form" method="POST"
-          action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
-          enctype="multipart/form-data" style="display:inline">
-      <input type="file" id="upload-input" name="files" multiple style="display:none">
-      <button type="button" class="tb-btn upload" id="upload-btn" onclick="handleUploadClick()">📤 업로드</button>
-    </form>
-    <button class="tb-btn" onclick="openMkdirModal()">📁 새 폴더</button>
-    <button class="tb-btn dim" id="dl-selected-btn-t" onclick="doDownloadSelected()">📦 선택 다운로드</button>
-    <button class="tb-btn danger dim" id="dl-delete-btn-t" onclick="doDeleteSelected()">🗑 선택 삭제</button>
-    <button class="tb-btn dim" id="move-btn-t" onclick="openFolderModal('move')">↗ 이동</button>
-    <button class="tb-btn dim" id="copy-btn-t" onclick="openFolderModal('copy')">📋 복사</button>
+    <div class="action-left">
+      <form id="upload-form" method="POST"
+            action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
+            enctype="multipart/form-data" style="display:inline">
+        <input type="file" id="upload-input" name="files" multiple style="display:none">
+        <button type="button" class="tb-btn upload" id="upload-btn" onclick="handleUploadClick()">📤 업로드</button>
+      </form>
+      <button class="tb-btn" onclick="openMkdirModal()">📁 새 폴더</button>
+    </div>
+    <div class="action-right">
+      <button class="tb-btn dim" id="dl-selected-btn-t" onclick="doDownloadSelected()">📦 선택 다운로드</button>
+      <button class="tb-btn danger dim" id="dl-delete-btn-t" onclick="doDeleteSelected()">🗑 선택 삭제</button>
+      <button class="tb-btn dim" id="move-btn-t" onclick="openFolderModal('move')">↗ 이동</button>
+      <button class="tb-btn dim" id="copy-btn-t" onclick="openFolderModal('copy')">📋 복사</button>
+    </div>
   </div>
 </div>
 
