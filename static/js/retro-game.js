@@ -61,12 +61,9 @@ const RetroGame = (function() {
   function resetBotState() {
     bot.y = GROUND_Y;
     bot.vy = 0;
-    bot.vx = 0;
     bot.grounded = true;
     bot.ducking = false;
     bot.canDouble = false;
-    bot.moveLeft = false;
-    bot.moveRight = false;
   }
 
   function resetGame() {
@@ -96,14 +93,12 @@ const RetroGame = (function() {
   /* ── 이벤트 ── */
   function bindEvents() {
     document.addEventListener('keydown', function(e) {
-      var spc  = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
-      var up   = e.key === 'ArrowUp'    || e.code === 'ArrowUp';
-      var dn   = e.key === 'ArrowDown'  || e.code === 'ArrowDown';
-      var left = e.key === 'ArrowLeft'  || e.code === 'ArrowLeft';
-      var right= e.key === 'ArrowRight' || e.code === 'ArrowRight';
+      var spc = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
+      var up  = e.key === 'ArrowUp'    || e.code === 'ArrowUp';
+      var dn  = e.key === 'ArrowDown'  || e.code === 'ArrowDown';
 
       // 게임 컨테이너가 보일 때만 스크롤 방지
-      if (spc || up || dn || left || right) {
+      if (spc || up || dn) {
         var el = document.getElementById('retro-game');
         if (el && el.offsetParent !== null) e.preventDefault();
       }
@@ -122,21 +117,11 @@ const RetroGame = (function() {
           doJump();
         }
         if (dn) bot.ducking = true;
-        if (left) bot.moveLeft = true;
-        if (right) bot.moveRight = true;
-      }
-      // idle/gameover 에서도 좌우 이동 허용
-      if (state !== 'running') {
-        if (left) { bot.x -= 4; if (bot.x < 0) bot.x = 0; }
-        if (right) { bot.x += 4; if (bot.x > W - BOT_W) bot.x = W - BOT_W; }
       }
     });
 
     document.addEventListener('keyup', function(e) {
-      var k = e.key || e.code;
-      if (k === 'ArrowDown' || k === 'ArrowDown') bot.ducking = false;
-      if (k === 'ArrowLeft' || k === 'ArrowLeft') bot.moveLeft = false;
-      if (k === 'ArrowRight' || k === 'ArrowRight') bot.moveRight = false;
+      if (e.key === 'ArrowDown' || e.code === 'ArrowDown') bot.ducking = false;
     });
 
     window.addEventListener('resize', resize);
@@ -164,14 +149,6 @@ const RetroGame = (function() {
       score++;
       speed = BASE_SPEED + score * SPEED_INCR;
     }
-
-    // 좌우 이동
-    bot.vx = 0;
-    if (bot.moveLeft) bot.vx = -3.5;
-    if (bot.moveRight) bot.vx = 3.5;
-    bot.x += bot.vx;
-    if (bot.x < 0) bot.x = 0;
-    if (bot.x > W - BOT_W - 6) bot.x = W - BOT_W - 6;
 
     // 수직 물리
     if (!bot.grounded) {
@@ -372,7 +349,7 @@ const RetroGame = (function() {
       ctx.fillText('▶  SPACE to start', W / 2, H / 2 + 4);
       ctx.fillStyle = '#8b949e';
       ctx.font = '10px "IBM Plex Mono", monospace';
-      ctx.fillText('Space/↑ jump  ·  ↓ duck  ·  ← → move', W / 2, H / 2 + 26);
+      ctx.fillText('Space / ↑  jump  ·  ↓  duck', W / 2, H / 2 + 26);
     }
 
     if (state === 'gameover') {
