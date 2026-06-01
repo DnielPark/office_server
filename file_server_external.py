@@ -9,7 +9,7 @@ from flask import (Flask, render_template, send_from_directory, send_file,
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
-import secrets, os, io, zipfile, json, smtplib, ssl, random, time, shutil
+import secrets, os, io, zipfile, json, smtplib, ssl, random, time, shutil, tempfile
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
@@ -66,6 +66,26 @@ HISTORY_FILE = os.path.join(os.path.dirname(__file__), "file_history.json")
 HISTORY_MAX = 2000  # 최대 보관 건수 (초과 시 오래된 순 제거)
 
 
+def _atomic_write_json(path, data):
+    """임시 파일로 쓴 뒤 os.replace()로 원자적 교체.
+    쓰기 도중 강제 종료돼도 원본 파일은 손상되지 않는다."""
+    path = str(path)
+    dir_ = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=dir_, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def _append_history(action: str, project: str, ip: str, original: str,
                     backup: str = None, extra: dict = None):
     """
@@ -98,8 +118,7 @@ def _append_history(action: str, project: str, ip: str, original: str,
         if len(history) > HISTORY_MAX:
             history = history[-HISTORY_MAX:]
 
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
+        _atomic_write_json(HISTORY_FILE, history)
     except Exception as e:
         logging.error(f"file_history 기록 실패: {e}")
 
@@ -147,8 +166,7 @@ def load_tokens():
         return {"allowed_emails": [], "tokens": {}, "pending_verifications": {}}
 
 def save_tokens(data):
-    with open(TOKENS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    _atomic_write_json(TOKENS_FILE, data)
 
 def is_allowed_email(email):
     data = load_tokens()

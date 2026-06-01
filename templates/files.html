@@ -235,6 +235,7 @@ a { color: var(--accent); text-decoration: none; }
   font-weight: 500;
   box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   max-width: 420px;
+  white-space: pre-line;
 }
 #toast.error {
   background: rgba(248,81,73,0.1);
@@ -702,7 +703,7 @@ const CURRENT_PATH = "{{ current_path }}";
 function showToast(msg, type) {
   const t = document.getElementById("toast");
   var icon = type === "error" ? "⚠ " : "✓ ";
-  t.innerHTML = icon + msg.replace(/\n/g, "<br>");
+  t.textContent = icon + msg; // innerHTML 금지: URL/파일명 값이 그대로 실행되지 않도록
   t.className = type;
   t.style.display = "block";
   setTimeout(() => { t.style.display = "none"; }, 5000);
