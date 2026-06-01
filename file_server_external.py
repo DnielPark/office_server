@@ -1039,6 +1039,8 @@ def api_copy():
     if not dest_path.is_dir():
         return jsonify({"ok": False, "msg": "대상 폴더가 존재하지 않습니다."})
 
+    renamed = []  # (원본명, 저장명)
+
     for idx, p in enumerate(paths):
         src = safe_path(base, p)
         if not src.exists():
@@ -1046,10 +1048,12 @@ def api_copy():
 
         # 충돌 시 suffix
         target = dest_path / src.name
+        was_renamed = False
         if target.exists():
             stem = src.stem
             suffix = src.suffix
             counter = 1
+            was_renamed = True
             while True:
                 new_name = f"{stem}_copy{counter}{suffix}" if counter > 1 else f"{stem}_copy{suffix}"
                 target = dest_path / new_name
@@ -1065,7 +1069,17 @@ def api_copy():
         except Exception as e:
             return jsonify({"ok": False, "msg": f"{idx+1}번째 '{src.name}' 복사 실패: {e}"})
 
-    return jsonify({"ok": True, "msg": f"{len(paths)}개 항목을 복사했습니다."})
+        if was_renamed:
+            renamed.append(f"{src.name} \u2192 {target.name}")
+
+    # 메시지 구성
+    if renamed:
+        detail = "\n".join(f"\u2022 {r}" for r in renamed)
+        msg = f"{len(paths)}\uac1c \ud56d\ubaa9 \ubcf5\uc0ac \uc644\ub8cc\n{detail}"
+    else:
+        msg = f"{len(paths)}개 항목을 복사했습니다."
+
+    return jsonify({"ok": True, "msg": msg})
 
 
 if __name__ == "__main__":
