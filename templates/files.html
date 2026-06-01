@@ -150,11 +150,39 @@ a { color: var(--accent); text-decoration: none; }
 .mobile-dropdown.open { display: flex; }
 .mobile-dropdown .tb-btn, .mobile-dropdown .logout-btn { font-size: 12px; padding: 5px 12px; }
 
+/* 모바일 고정 푸터 */
+.mobile-footer {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px 8px;
+  justify-content: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.mobile-footer a {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 7px;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 4px;
+  transition: color .15s, background .15s;
+}
+.mobile-footer a:active { color: var(--accent); background: rgba(47,129,247,0.1); }
+
 /* 모바일 반응형 */
 @media (max-width: 768px) {
   .topbar-row2 { display: none; }
   .hamburger-btn { display: inline-block; }
   .col-date { display: none; }
+  .mobile-footer { display: flex; }
+  .content { padding-bottom: 60px; }
 }
 
 /* 용량 표시줄 */
@@ -746,15 +774,23 @@ function toggleAll() {
 function updateDL() {
   const count = document.querySelectorAll(".file-check-item:checked").length;
   // 탑바 버튼
-  var tDl = document.getElementById("dl-selected-btn-t");
-  var tDel = document.getElementById("dl-delete-btn-t");
-  if (tDl) tDl.classList.toggle("dim", count === 0);
-  if (tDel) tDel.classList.toggle("dim", count === 0);
-  // 모바일 버튼
-  var mDl = document.getElementById("dl-selected-btn-m");
-  var mDel = document.getElementById("dl-delete-btn-m");
-  if (mDl) mDl.classList.toggle("dim", count === 0);
-  if (mDel) mDel.classList.toggle("dim", count === 0);
+  ["dl-selected-btn-t","dl-delete-btn-t"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle("dim", count === 0);
+  });
+  // 모바일 드롭다운 버튼
+  ["dl-selected-btn-m","dl-delete-btn-m"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle("dim", count === 0);
+  });
+  // 모바일 푸터 링크 (클릭 방지를 위해 opacity 처리)
+  ["dl-footer-m","dl-delete-footer-m","move-footer-m","copy-footer-m"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.opacity = count === 0 ? "0.4" : "1";
+      el.style.pointerEvents = count === 0 ? "none" : "auto";
+    }
+  });
 }
 
 // 선택 다운로드 (ZIP)
@@ -869,10 +905,16 @@ var _selectedDest = null;
 // 체크박스 변경 시 이동/복사 버튼 활성화
 function updateMoveCopy() {
   var count = document.querySelectorAll(".file-check-item:checked").length;
-  var ids = ["move-btn-t","copy-btn-t","move-btn-m","copy-btn-m"];
-  ids.forEach(function(id) {
+  ["move-btn-t","copy-btn-t","move-btn-m","copy-btn-m"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.classList.toggle("dim", count === 0);
+  });
+  ["move-footer-m","copy-footer-m"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.opacity = count === 0 ? "0.4" : "1";
+      el.style.pointerEvents = count === 0 ? "none" : "auto";
+    }
   });
 }
 
@@ -1059,6 +1101,16 @@ async function confirmFolderAction() {
   }
 }
 </script>
+
+<!-- 모바일 하단 고정 푸터 -->
+<div class="mobile-footer">
+  <a href="#" onclick="event.preventDefault();handleUploadClick()">📤 업로드</a>
+  <a href="#" onclick="event.preventDefault();openMkdirModal()">📁 새폴더</a>
+  <a href="#" id="dl-footer-m" onclick="event.preventDefault();doDownloadSelected()">📦 다운로드</a>
+  <a href="#" id="dl-delete-footer-m" onclick="event.preventDefault();doDeleteSelected()">🗑 삭제</a>
+  <a href="#" id="move-footer-m" onclick="event.preventDefault();openFolderModal('move')">↗ 이동</a>
+  <a href="#" id="copy-footer-m" onclick="event.preventDefault();openFolderModal('copy')">📋 복사</a>
+</div>
 
 </body>
 </html>
