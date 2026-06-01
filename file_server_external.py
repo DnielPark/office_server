@@ -933,6 +933,39 @@ def api_delete():
         return jsonify({"ok": False, "msg": str(e)})
 
 
+@app.route("/api/delete-selected", methods=["POST"])
+def api_delete_selected():
+    data = request.get_json()
+    project_key = data.get("project", "")
+    paths = data.get("paths", [])
+
+    if project_key not in PROJECTS:
+        return jsonify({"ok": False, "msg": "잘못된 프로젝트입니다."})
+    if not is_authenticated(project_key):
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."})
+
+    base = SHARED_FOLDER / project_key
+    success_count = 0
+    errors = []
+
+    for subpath in paths:
+        target = safe_path(base, subpath)
+        if not target.exists():
+            errors.append(f"'{target.name}' 없음")
+            continue
+        try:
+            _backup_to_dotbackup(base, target)
+            success_count += 1
+        except Exception as e:
+            errors.append(f"'{target.name}': {e}")
+
+    if success_count > 0:
+        msg = f"{success_count}개를 .backup으로 이동했습니다."
+        return jsonify({"ok": True, "msg": msg})
+    else:
+        return jsonify({"ok": False, "msg": ";;".join(errors)})
+
+
 @app.route("/api/download-selected", methods=["POST"])
 def api_download_selected():
     data = request.get_json()
