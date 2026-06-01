@@ -31,16 +31,25 @@ a { color: var(--accent); text-decoration: none; }
 .topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-row1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  padding: 8px 16px;
+}
+.topbar-row2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 8px;
   flex-wrap: wrap;
 }
+
 .topbar-main {
   display: flex;
   align-items: center;
@@ -59,27 +68,19 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 12px;
   flex-wrap: wrap;
   min-width: 0;
-  overflow: hidden;
 }
 .breadcrumb a { color: var(--muted); transition: color .15s; }
 .breadcrumb a:hover { color: var(--text); }
 .breadcrumb .sep { color: var(--border); }
 .breadcrumb .current { color: var(--text); font-weight: 500; }
 
-/* 상단바 액션 버튼 (데스크톱) */
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
+/* 상단바 버튼 */
 .tb-btn {
   background: transparent;
   color: var(--muted);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 5px 12px;
   font-size: 12px;
   font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer;
@@ -88,37 +89,26 @@ a { color: var(--accent); text-decoration: none; }
   line-height: 1.4;
 }
 .tb-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-/* 버튼 색상 변형 */
 .tb-btn.upload { background: var(--accent); color: #fff; border-color: var(--accent); }
 .tb-btn.upload:hover { background: var(--accent2); }
 .tb-btn.danger { color: var(--danger); border-color: var(--danger); }
 .tb-btn.danger:hover { background: var(--danger); color: #fff; }
-.tb-btn.active { opacity: 1; pointer-events: auto; }
 .tb-btn.dim { opacity: 0.5; pointer-events: none; }
 
 /* 로그아웃/비밀번호 변경 */
 .logout-btn {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   text-decoration: none;
   transition: border-color .15s, color .15s;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .logout-btn:hover { border-color: var(--muted); color: var(--text); }
-
-/* 상단바 오른쪽 영역 */
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
 
 /* 모바일 햄버거 */
 .hamburger-btn {
@@ -144,18 +134,16 @@ a { color: var(--accent); text-decoration: none; }
   gap: 6px;
   flex-wrap: wrap;
   position: sticky;
-  top: 46px;
+  top: 0;
   z-index: 9;
 }
 .mobile-dropdown.open { display: flex; }
-.mobile-dropdown .tb-btn { font-size: 12px; padding: 5px 10px; }
+.mobile-dropdown .tb-btn, .mobile-dropdown .logout-btn { font-size: 12px; padding: 5px 12px; }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-  .topbar { padding: 8px 12px; gap: 6px; }
-  .topbar-actions { display: none; }
+  .topbar-row2 { display: none; }
   .hamburger-btn { display: inline-block; }
-  .logout-btn { font-size: 10px; padding: 3px 8px; }
 }
 
 /* 용량 표시줄 */
@@ -219,44 +207,8 @@ a { color: var(--accent); text-decoration: none; }
   color: var(--success);
 }
 
-/* 액션 바 (데스크톱용 — 모바일은 탑바 드롭다운 사용) */
-.action-bar {
-  display: none;
-}
-
-@media (min-width: 769px) {
-  .action-bar { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
-}
-
-/* 업로드 버튼 */
-.upload-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-family: 'Noto Sans KR', sans-serif;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s;
-}
-.upload-btn:hover { background: var(--accent2); }
-
-/* 폴더 생성 트리거 */
-.mkdir-trigger-btn {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-family: 'Noto Sans KR', sans-serif;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, color .15s;
-}
-.mkdir-trigger-btn:hover { background: var(--accent); color: #fff; }
+/* 업로드 버튼 (body fallback — 미사용) */
+.upload-btn { display: none; }
 .mkdir-input {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -334,6 +286,9 @@ a { color: var(--accent); text-decoration: none; }
 @media (max-width: 768px) {
   .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
 }
+
+/* 바디 fallback 버튼 — 미사용 */
+.dl-selected-btn, .dl-delete-btn, .action-btn, .mkdir-trigger-btn { display: none; }
 
 .dl-selected-btn {
   background: var(--accent);
@@ -514,40 +469,40 @@ a { color: var(--accent); text-decoration: none; }
 
 <!-- 상단바 -->
 <div class="topbar">
-  <div class="topbar-main">
-    <a class="home-btn" href="/" title="메인으로">🏗</a>
-    <div class="breadcrumb">
-      <a href="/files/{{ project_key }}">{{ project_name }}</a>
-      {% for crumb in breadcrumbs %}
-        <span class="sep">/</span>
-        {% if not loop.last %}
-          <a href="/files/{{ project_key }}/{{ crumb.path }}">{{ crumb.name }}</a>
-        {% else %}
-          <span class="current">{{ crumb.name }}</span>
-        {% endif %}
-      {% endfor %}
+  <!-- 1줄: 홈 + 경로 -->
+  <div class="topbar-row1">
+    <div class="topbar-main">
+      <a class="home-btn" href="/" title="메인으로">🏗</a>
+      <div class="breadcrumb">
+        <a href="/files/{{ project_key }}">{{ project_name }}</a>
+        {% for crumb in breadcrumbs %}
+          <span class="sep">/</span>
+          {% if not loop.last %}
+            <a href="/files/{{ project_key }}/{{ crumb.path }}">{{ crumb.name }}</a>
+          {% else %}
+            <span class="current">{{ crumb.name }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
   </div>
 
-  <!-- 데스크톱 액션 버튼 -->
-  <div class="topbar-actions" id="topbar-actions">
+  <!-- 2줄: 액션 버튼 + 로그아웃 -->
+  <div class="topbar-row2" id="topbar-row2">
     <form id="upload-form" method="POST"
           action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
           enctype="multipart/form-data" style="display:inline">
       <input type="file" id="upload-input" name="files" multiple style="display:none">
-      <button type="button" class="tb-btn upload" id="upload-btn" onclick="handleUploadClick()">📤</button>
+      <button type="button" class="tb-btn upload" id="upload-btn" onclick="handleUploadClick()">📤 업로드</button>
     </form>
-    <button class="tb-btn" onclick="openMkdirModal()">📁</button>
-    <button class="tb-btn dim" id="dl-selected-btn-t" onclick="doDownloadSelected()">📦</button>
-    <button class="tb-btn danger dim" id="dl-delete-btn-t" onclick="doDeleteSelected()">🗑</button>
-    <button class="tb-btn dim" id="move-btn-t" onclick="openFolderModal('move')">↗</button>
-    <button class="tb-btn dim" id="copy-btn-t" onclick="openFolderModal('copy')">📋</button>
-  </div>
-
-  <div class="topbar-right">
-    <a class="logout-btn" href="/change-password/{{ project_key }}">🔑</a>
-    <a class="logout-btn" href="/logout/{{ project_key }}">🚪</a>
-    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+    <button class="tb-btn" onclick="openMkdirModal()">📁 새 폴더</button>
+    <button class="tb-btn dim" id="dl-selected-btn-t" onclick="doDownloadSelected()">📦 선택 다운로드</button>
+    <button class="tb-btn danger dim" id="dl-delete-btn-t" onclick="doDeleteSelected()">🗑 선택 삭제</button>
+    <button class="tb-btn dim" id="move-btn-t" onclick="openFolderModal('move')">↗ 이동</button>
+    <button class="tb-btn dim" id="copy-btn-t" onclick="openFolderModal('copy')">📋 복사</button>
+    <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
+    <a class="logout-btn" href="/logout/{{ project_key }}">🚪 로그아웃</a>
   </div>
 </div>
 
@@ -559,8 +514,8 @@ a { color: var(--accent); text-decoration: none; }
   <button class="tb-btn danger dim" id="dl-delete-btn-m" onclick="doDeleteSelected()">🗑 삭제</button>
   <button class="tb-btn dim" id="move-btn-m" onclick="openFolderModal('move')">↗ 이동</button>
   <button class="tb-btn dim" id="copy-btn-m" onclick="openFolderModal('copy')">📋 복사</button>
-  <a class="logout-btn" href="/change-password/{{ project_key }}" style="font-size:12px;padding:5px 10px">🔑 비밀번호 변경</a>
-  <a class="logout-btn" href="/logout/{{ project_key }}" style="font-size:12px;padding:5px 10px">🚪 로그아웃</a>
+  <a class="logout-btn" href="/change-password/{{ project_key }}">🔑 비밀번호 변경</a>
+  <a class="logout-btn" href="/logout/{{ project_key }}">🚪 로그아웃</a>
 </div>
 
 <!-- 용량 표시줄 -->
@@ -590,20 +545,7 @@ a { color: var(--accent); text-decoration: none; }
   <!-- 토스트 메시지 -->
   <div id="toast"></div>
 
-  <!-- 액션 바 (데스크톱에서만 표시) -->
-  <div class="action-bar" id="action-bar">
-    <form id="upload-form-body" method="POST"
-          action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
-          enctype="multipart/form-data">
-      <input type="file" id="upload-input-body" name="files" multiple style="display:none">
-      <button type="button" class="upload-btn" id="upload-btn-body" onclick="handleUploadClickBody()">📤 업로드</button>
-    </form>
-    <button class="mkdir-trigger-btn" onclick="openMkdirModal()">📁 새 폴더</button>
-    <button class="dl-selected-btn" id="dl-selected-btn-body" onclick="doDownloadSelected()">📦 선택 다운로드</button>
-    <button class="dl-delete-btn" id="dl-delete-btn-body" onclick="doDeleteSelected()">🗑 선택 삭제</button>
-    <button class="action-btn" id="move-btn-body" onclick="openFolderModal('move')">↗ 이동</button>
-    <button class="action-btn" id="copy-btn-body" onclick="openFolderModal('copy')">📋 복사</button>
-  </div>
+  <!-- 액션 바 (데스크톱에서만 표시) → 현재 상단바 2줄로 대체 -->
 
   <!-- 파일 목록 -->
   <table class="file-table">
@@ -786,28 +728,16 @@ function toggleAll() {
 // 선택 상태 업데이트
 function updateDL() {
   const count = document.querySelectorAll(".file-check-item:checked").length;
-  // 바디 버튼
-  const dlBtn = document.getElementById("dl-selected-btn");
-  dlBtn.textContent = count > 0 ? `📦 선택 다운로드 (${count})` : "📦 선택 다운로드";
-  dlBtn.classList.toggle("active", count > 0);
-  const delBtn = document.getElementById("dl-delete-btn");
-  delBtn.textContent = count > 0 ? `🗑 선택 삭제 (${count})` : "🗑 선택 삭제";
-  delBtn.classList.toggle("active", count > 0);
-  // 모바일 버튼
-  var mDl = document.getElementById("dl-selected-btn-m");
-  var mDel = document.getElementById("dl-delete-btn-m");
-  if (mDl) mDl.classList.toggle("dim", count === 0);
-  if (mDel) mDel.classList.toggle("dim", count === 0);
   // 탑바 버튼
   var tDl = document.getElementById("dl-selected-btn-t");
   var tDel = document.getElementById("dl-delete-btn-t");
   if (tDl) tDl.classList.toggle("dim", count === 0);
   if (tDel) tDel.classList.toggle("dim", count === 0);
-  // 바디 버튼
-  var bDl = document.getElementById("dl-selected-btn-body");
-  var bDel = document.getElementById("dl-delete-btn-body");
-  if (bDl) { bDl.textContent = count > 0 ? `📦 선택 다운로드 (${count})` : "📦 선택 다운로드"; bDl.classList.toggle("active", count > 0); }
-  if (bDel) { bDel.textContent = count > 0 ? `🗑 선택 삭제 (${count})` : "🗑 선택 삭제"; bDel.classList.toggle("active", count > 0); }
+  // 모바일 버튼
+  var mDl = document.getElementById("dl-selected-btn-m");
+  var mDel = document.getElementById("dl-delete-btn-m");
+  if (mDl) mDl.classList.toggle("dim", count === 0);
+  if (mDel) mDel.classList.toggle("dim", count === 0);
 }
 
 // 선택 다운로드 (ZIP)
@@ -888,22 +818,6 @@ document.addEventListener("click", function(e) {
   }
 });
 
-// 업로드 (바디 폼)
-var uploadInputBody = document.getElementById("upload-input-body");
-var uploadBtnBody = document.getElementById("upload-btn-body");
-function handleUploadClickBody() {
-  if (uploadInputBody.files.length > 0) {
-    document.getElementById("upload-form-body").submit();
-  } else {
-    uploadInputBody.click();
-  }
-}
-uploadInputBody.addEventListener("change", function() {
-  var count = uploadInputBody.files.length;
-  uploadBtnBody.textContent = count > 0 ? `📤 ${count}개 선택됨 — 업로드` : "📤 업로드";
-  uploadBtnBody.style.background = count > 0 ? "var(--success)" : "var(--accent)";
-});
-
 // ── 새 폴더 모달 ──
 function openMkdirModal() {
   document.getElementById("mkdir-modal").classList.add("open");
@@ -917,24 +831,14 @@ function closeMkdirModal() {
 // ── 업로드 ──
 const uploadInput = document.getElementById("upload-input");
 const uploadBtn = document.getElementById("upload-btn");
-
 function handleUploadClick() {
-  if (uploadInput.files.length > 0) {
-    document.getElementById("upload-form").submit();
-  } else {
-    uploadInput.click();
-  }
+  if (uploadInput.files.length > 0) { document.getElementById("upload-form").submit(); }
+  else { uploadInput.click(); }
 }
-
 uploadInput.addEventListener("change", function() {
-  const count = uploadInput.files.length;
-  if (count > 0) {
-    uploadBtn.textContent = `📤 ${count}개 선택됨 — 업로드`;
-    uploadBtn.style.background = "var(--success)";
-  } else {
-    uploadBtn.textContent = "📤 업로드";
-    uploadBtn.style.background = "var(--accent)";
-  }
+  var count = uploadInput.files.length;
+  uploadBtn.textContent = count > 0 ? `📤 ${count}개 선택됨` : "📤 업로드";
+  uploadBtn.style.background = count > 0 ? "var(--success)" : "var(--accent)";
 });
 
 // ── Enter 키로 폴더 생성
@@ -950,18 +854,14 @@ function updateMoveCopy() {
   var count = document.querySelectorAll(".file-check-item:checked").length;
   document.getElementById("move-btn").classList.toggle("active", count > 0);
   document.getElementById("copy-btn").classList.toggle("active", count > 0);
-  var m = document.getElementById("move-btn-m");
-  var c = document.getElementById("copy-btn-m");
-  if (m) m.classList.toggle("dim", count === 0);
-  if (c) c.classList.toggle("dim", count === 0);
   var t = document.getElementById("move-btn-t");
-  var u = document.getElementById("copy-btn-t");
+  var c = document.getElementById("copy-btn-t");
   if (t) t.classList.toggle("dim", count === 0);
-  if (u) u.classList.toggle("dim", count === 0);
-  var b = document.getElementById("move-btn-body");
-  var v = document.getElementById("copy-btn-body");
-  if (b) b.classList.toggle("active", count > 0);
-  if (v) v.classList.toggle("active", count > 0);
+  if (c) c.classList.toggle("dim", count === 0);
+  var m = document.getElementById("move-btn-m");
+  var v = document.getElementById("copy-btn-m");
+  if (m) m.classList.toggle("dim", count === 0);
+  if (v) v.classList.toggle("dim", count === 0);
 }
 
 // updateDL()에 연결
