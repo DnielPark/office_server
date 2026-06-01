@@ -274,47 +274,51 @@ const RetroGame = (function() {
   }
 
   function drawBot() {
-    var x = bot.x, c = '#2f81f7';
+    var x = bot.x, y = bot.y, c = '#2f81f7';
+    var running = state === 'running';
 
     if (bot.ducking) {
       // 덕킹: 낮고 넓게
       ctx.fillStyle = c;
-      ctx.fillRect(x, GROUND_Y - 10, BOT_W + 6, 10);
+      ctx.fillRect(x, y - 10, BOT_W + 6, 10);
       ctx.fillStyle = 'rgba(47,129,247,0.5)';
-      ctx.fillRect(x + 4, GROUND_Y - 8, 3, 3);
-      ctx.fillRect(x + BOT_W - 1, GROUND_Y - 8, 3, 3);
+      ctx.fillRect(x + 4, y - 8, 3, 3);
+      ctx.fillRect(x + BOT_W - 1, y - 8, 3, 3);
       return;
     }
 
     // 안테나
     ctx.fillStyle = 'rgba(47,129,247,0.6)';
-    ctx.fillRect(x + 7, GROUND_Y - 28, 2, 4);
+    ctx.fillRect(x + 7, y - 28, 2, 4);
 
     // 머리
     ctx.fillStyle = c;
-    ctx.fillRect(x, GROUND_Y - 24, BOT_W, 8);
+    ctx.fillRect(x, y - 24, BOT_W, 8);
 
     // 눈
     ctx.fillStyle = '#0d1117';
-    ctx.fillRect(x + 3, GROUND_Y - 22, 3, 3);
-    ctx.fillRect(x + 10, GROUND_Y - 22, 3, 3);
+    ctx.fillRect(x + 3, y - 22, 3, 3);
+    ctx.fillRect(x + 10, y - 22, 3, 3);
     // 눈 광택
     ctx.fillStyle = 'rgba(47,129,247,0.7)';
-    ctx.fillRect(x + 3, GROUND_Y - 22, 3, 1);
-    ctx.fillRect(x + 10, GROUND_Y - 22, 3, 1);
+    ctx.fillRect(x + 3, y - 22, 3, 1);
+    ctx.fillRect(x + 10, y - 22, 3, 1);
 
     // 몸통
     ctx.fillStyle = c;
-    ctx.fillRect(x + 3, GROUND_Y - 16, BOT_W - 6, 8);
+    ctx.fillRect(x + 3, y - 16, BOT_W - 6, 8);
 
-    // 다리
-    ctx.fillRect(x + 2, GROUND_Y - 8, 5, 6);
-    ctx.fillRect(x + BOT_W - 7, GROUND_Y - 8, 5, 6);
+    // 다리 (running 시 교차 애니메이션)
+    var legPhase = running && (Math.floor(frame / 5) % 2 === 0);
+    var leftLegY  = legPhase ? y - 9 : y - 6;
+    var rightLegY = legPhase ? y - 6 : y - 9;
+    ctx.fillRect(x + 2, leftLegY, 5, 6);
+    ctx.fillRect(x + BOT_W - 7, rightLegY, 5, 6);
 
     // 발
     ctx.fillStyle = 'rgba(47,129,247,0.5)';
-    ctx.fillRect(x + 1, GROUND_Y - 2, 6, 2);
-    ctx.fillRect(x + BOT_W - 7, GROUND_Y - 2, 6, 2);
+    ctx.fillRect(x + 1, y - 2, 6, 2);
+    ctx.fillRect(x + BOT_W - 7, y - 2, 6, 2);
   }
 
   /* ── 루프 ── */
