@@ -59,6 +59,51 @@ root_logger.addHandler(console_handler)
 # Flask/Werkzeug 로그 레벨 조정
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
+# ── 파일 작업 이력 ────────────────────────────────
+# file_history.json 에 모든 파일 작업(업로드/삭제/이동/복사/폴더생성)을 기록
+# 추후 복구/감사 기능 구현을 위한 기반 데이터
+HISTORY_FILE = os.path.join(os.path.dirname(__file__), "file_history.json")
+HISTORY_MAX = 2000  # 최대 보관 건수 (초과 시 오래된 순 제거)
+
+
+def _append_history(action: str, project: str, ip: str, original: str,
+                    backup: str = None, extra: dict = None):
+    """
+    파일 작업 이력을 file_history.json 에 append.
+    - action : upload | delete | move | copy | mkdir
+    - project: 프로젝트 키 ("sungsan1" 등) 또는 "local"
+    - ip     : 요청자 IP
+    - original: 작업 대상 (project 기준 상대경로)
+    - backup : 삭제/덮어쓰기 시 .backup 경로
+    - extra  : 이동/복사 시 dest 등 추가 정보
+    """
+    record = {
+        "action": action,
+        "project": project,
+        "ip": ip,
+        "original": original,
+        "backup": backup,
+        "extra": extra or {},
+        "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    }
+    try:
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                history = json.load(f)
+        else:
+            history = []
+
+        history.append(record)
+
+        if len(history) > HISTORY_MAX:
+            history = history[-HISTORY_MAX:]
+
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logging.error(f"file_history 기록 실패: {e}")
+
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
@@ -508,6 +553,8 @@ def local_api_mkdir():
         return jsonify({"ok": False, "msg": "이미 존재하는 폴더입니다."})
     try:
         new_folder.mkdir(parents=False)
+        _append_history("mkdir", "local", request.remote_addr,
+                        f"local/{subpath}/{folder_name}" if subpath else f"local/{folder_name}")
         return jsonify({"ok": True, "msg": f"'{folder_name}' 폴더 생성됨"})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
@@ -536,6 +583,8 @@ def local_api_delete():
             else:
                 dest = LOCAL_BACKUP / f"{target.name}_{ts}"
         target.rename(dest)
+        _append_history("delete", "local", request.remote_addr,
+                        f"local/{subpath}", backup=str(dest))
         return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동"})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})

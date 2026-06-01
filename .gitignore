@@ -34,3 +34,6 @@ local_tokens.json
 
 # Server logs
 logs/
+
+# 파일 작업 이력
+file_history.json
