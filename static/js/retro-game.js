@@ -205,7 +205,7 @@ const RetroGame = (function() {
     coinTimer--;
     if (coinTimer <= 0) {
       spawnCoin();
-      coinTimer = 60 + Math.floor(Math.random() * 80);
+      coinTimer = 18 + Math.floor(Math.random() * 35);
     }
 
     // 동전 이동
@@ -259,11 +259,14 @@ const RetroGame = (function() {
   }
 
   function spawnCoin() {
-    var cy = GROUND_Y - (COIN_Y_BOT + Math.random() * (COIN_Y_TOP - COIN_Y_BOT));
-    coins.push({
-      x: W + 10,
-      y: cy
-    });
+    var count = Math.random() < 0.35 ? 2 + Math.floor(Math.random() * 2) : 1;
+    for (var i = 0; i < count; i++) {
+      var cy = GROUND_Y - (COIN_Y_BOT + Math.random() * (COIN_Y_TOP - COIN_Y_BOT));
+      coins.push({
+        x: W + 10 + i * 22,
+        y: cy
+      });
+    }
   }
 
   function gameOver() {
