@@ -140,21 +140,7 @@ a { color: var(--accent); text-decoration: none; }
   align-items: center;
 }
 
-/* 업로드 */
-.upload-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 2;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-.upload-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.upload-section input[type=file] { font-size: 13px; color: var(--muted); flex: 1; min-width: 0; }
+/* 업로드 버튼 */
 .upload-btn {
   background: var(--accent);
   color: #fff;
@@ -466,12 +452,11 @@ a { color: var(--accent); text-decoration: none; }
   <div class="action-bar">
 
     <!-- 업로드 -->
-    <form class="upload-section" method="POST"
+    <form id="upload-form" method="POST"
           action="/upload/{{ project_key }}{% if current_path %}/{{ current_path }}{% endif %}"
           enctype="multipart/form-data">
-      <span class="upload-label">📤 업로드</span>
-      <input type="file" name="files" multiple>
-      <button type="submit" class="upload-btn">업로드</button>
+      <input type="file" id="upload-input" name="files" multiple style="display:none">
+      <button type="button" id="upload-btn" class="upload-btn" onclick="handleUploadClick()">📤 업로드</button>
     </form>
 
     <!-- 폴더 생성 -->
@@ -717,7 +702,30 @@ function closeMkdirModal() {
   document.getElementById("mkdir-input").value = "";
 }
 
-// Enter 키로 폴더 생성
+// ── 업로드 ──
+const uploadInput = document.getElementById("upload-input");
+const uploadBtn = document.getElementById("upload-btn");
+
+function handleUploadClick() {
+  if (uploadInput.files.length > 0) {
+    document.getElementById("upload-form").submit();
+  } else {
+    uploadInput.click();
+  }
+}
+
+uploadInput.addEventListener("change", function() {
+  const count = uploadInput.files.length;
+  if (count > 0) {
+    uploadBtn.textContent = `📤 ${count}개 선택됨 — 업로드`;
+    uploadBtn.style.background = "var(--success)";
+  } else {
+    uploadBtn.textContent = "📤 업로드";
+    uploadBtn.style.background = "var(--accent)";
+  }
+});
+
+// ── Enter 키로 폴더 생성
 document.getElementById("mkdir-input")
   .addEventListener("keydown", e => { if (e.key === "Enter") doMkdir(); });
 
