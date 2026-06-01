@@ -277,7 +277,141 @@ a { color: var(--accent); text-decoration: none; }
 }
 .dl-selected-btn.active { opacity: 1; pointer-events: auto; }
 .dl-selected-btn:hover { background: var(--accent2); }
-.dl-selected-btn:hover { background: var(--accent2); }
+
+/* 이동/복사 버튼 */
+.action-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s, opacity .15s;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.action-btn.active { opacity: 1; pointer-events: auto; }
+.action-btn:hover { background: var(--accent); color: #fff; }
+
+/* 모달 배경 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+/* 모달 */
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+  min-height: 100px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+.modal-footer .btn-confirm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-footer .btn-confirm:hover { background: var(--accent2); }
+.modal-footer .btn-cancel {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+}
+.modal-footer .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
+
+/* 폴더 트리 */
+.folder-tree { list-style: none; padding: 0; margin: 0; }
+.folder-tree li { padding: 4px 0; }
+.folder-tree .folder-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background .15s;
+}
+.folder-tree .folder-item:hover { background: rgba(255,255,255,0.05); }
+.folder-tree .folder-item.selected {
+  background: rgba(47,129,247,0.15);
+  color: var(--accent);
+}
+.folder-tree .folder-item.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.folder-tree .folder-arrow {
+  display: inline-block;
+  width: 14px;
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.folder-tree .folder-name { flex: 1; }
+.folder-tree .children { padding-left: 20px; }
+.folder-loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.empty-state {
   text-align: center;
   padding: 60px 24px;
   color: var(--muted);
@@ -358,6 +492,10 @@ a { color: var(--accent); text-decoration: none; }
     <!-- 선택 다운로드 -->
     <button class="dl-selected-btn" id="dl-selected-btn" onclick="doDownloadSelected()">📦 선택 다운로드</button>
 
+    <!-- 이동/복사 -->
+    <button class="action-btn" id="move-btn" onclick="openFolderModal('move')">↗ 이동</button>
+    <button class="action-btn" id="copy-btn" onclick="openFolderModal('copy')">📋 복사</button>
+
   </div>
 
   <!-- 파일 목록 -->
@@ -418,6 +556,23 @@ a { color: var(--accent); text-decoration: none; }
   <div class="empty-state">📂 폴더가 비어 있습니다.</div>
   {% endif %}
 
+</div>
+
+<!-- 폴더 선택 모달 -->
+<div class="modal-overlay" id="folder-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modal-title">📁 대상 폴더 선택</span>
+      <button class="modal-close" onclick="closeFolderModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="folder-loading">📂 폴더 목록 불러오는 중...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeFolderModal()">취소</button>
+      <button class="btn-confirm" id="modal-confirm" onclick="confirmFolderAction()">확인</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -548,6 +703,177 @@ async function doDownloadSelected() {
 // Enter 키로 폴더 생성
 document.getElementById("mkdir-input")
   .addEventListener("keydown", e => { if (e.key === "Enter") doMkdir(); });
+
+// ── 이동/복사 ────────────────────────────────────
+var _actionMode = "move";
+var _selectedDest = null;
+
+// 체크박스 변경 시 이동/복사 버튼 활성화
+function updateMoveCopy() {
+  var count = document.querySelectorAll(".file-check-item:checked").length;
+  document.getElementById("move-btn").classList.toggle("active", count > 0);
+  document.getElementById("copy-btn").classList.toggle("active", count > 0);
+}
+
+// updateDL()에 연결
+var _origUpdateDL = updateDL;
+updateDL = function() {
+  _origUpdateDL();
+  updateMoveCopy();
+};
+
+// 모달 열기
+function openFolderModal(mode) {
+  _actionMode = mode;
+  _selectedDest = null;
+  document.getElementById("modal-title").textContent =
+    mode === "move" ? "↗ 이동할 대상 폴더 선택" : "📋 복사할 대상 폴더 선택";
+  document.getElementById("modal-body").innerHTML =
+    "<div class=\"folder-loading\">📂 폴더 목록 불러오는 중...</div>";
+  document.getElementById("folder-modal").classList.add("open");
+  loadFolderTree("");
+}
+
+// 모달 닫기
+function closeFolderModal() {
+  document.getElementById("folder-modal").classList.remove("open");
+  _selectedDest = null;
+}
+
+// 폴더 트리 로딩 (지연 로딩)
+async function loadFolderTree(subpath, containerEl) {
+  var container = containerEl || document.getElementById("modal-body");
+
+  try {
+    var res = await fetch("/files/" + PROJECT_KEY + "/" + subpath, { headers: { "X-Requested-With": "fetch" } });
+    if (!res.ok) { container.innerHTML = "<div class=\"folder-loading\">⚠ 폴더 로딩 실패</div>"; return; }
+    var html = await res.text();
+    // Parse folder names from the HTML (simplified: fetch the JSON endpoint instead)
+    var foldersRes = await fetch("/api/list-dirs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project: PROJECT_KEY, path: subpath })
+    });
+    var foldersData = await foldersRes.json();
+    if (!foldersData.ok) { container.innerHTML = "<div class=\"folder-loading\">⚠ 폴더 목록 오류</div>"; return; }
+
+    renderFolderTree(foldersData.dirs, subpath, container);
+  } catch (e) {
+    container.innerHTML = "<div class=\"folder-loading\">⚠ 오류 발생</div>";
+  }
+}
+
+// 폴더 트리 렌더링
+function renderFolderTree(dirs, parentPath, container) {
+  var currentPath = CURRENT_PATH || "";
+  var ul = document.createElement("ul");
+  ul.className = "folder-tree";
+
+  // 루트 항목 (전체 폴더)
+  if (parentPath === "") {
+    var rootLi = document.createElement("li");
+    var rootItem = document.createElement("div");
+    rootItem.className = "folder-item";
+    rootItem.innerHTML = "<span class=\"folder-arrow\">📁</span><span class=\"folder-name\">/ (최상위)</span>";
+    rootItem.onclick = function() { selectFolder(""); updateSelectedUI(this); };
+    rootLi.appendChild(rootItem);
+    ul.appendChild(rootLi);
+  }
+
+  dirs.forEach(function(d) {
+    var fullPath = parentPath ? parentPath + "/" + d : d;
+    var isCurrent = (fullPath === currentPath);
+    var isParent = currentPath && (fullPath === currentPath || fullPath.startsWith(currentPath + "/"));
+    var disabled = isCurrent || isParent;
+
+    var li = document.createElement("li");
+    var item = document.createElement("div");
+    item.className = "folder-item";
+    if (_selectedDest === fullPath) item.classList.add("selected");
+    if (disabled) item.classList.add("disabled");
+
+    item.innerHTML = "<span class=\"folder-arrow\">▶</span><span class=\"folder-name\">📁 " + d + "</span>";
+
+    if (!disabled) {
+      (function(fp, el) {
+        item.onclick = function() { selectFolder(fp); updateSelectedUI(el); };
+      })(fullPath, item);
+    }
+
+    // 하위 폴더 컨테이너 (지연 로딩 준비)
+    var childContainer = document.createElement("div");
+    childContainer.className = "children";
+    childContainer.style.display = "none";
+
+    // arrow 클릭 시 하위 폴더 로딩
+    var arrow = item.querySelector(".folder-arrow");
+    arrow.onclick = function(e) {
+      e.stopPropagation();
+      if (childContainer.style.display === "none") {
+        childContainer.style.display = "block";
+        arrow.textContent = "▼";
+        if (!childContainer.hasChildNodes() || childContainer.children.length === 0) {
+          childContainer.innerHTML = "<div class=\"folder-loading\">로딩 중...</div>";
+          loadFolderTree(fullPath, childContainer);
+        }
+      } else {
+        childContainer.style.display = "none";
+        arrow.textContent = "▶";
+      }
+    };
+
+    li.appendChild(item);
+    li.appendChild(childContainer);
+    ul.appendChild(li);
+  });
+
+  container.innerHTML = "";
+  container.appendChild(ul);
+}
+
+// 폴더 선택
+function selectFolder(path) {
+  _selectedDest = path;
+}
+
+// UI 선택 표시 업데이트
+function updateSelectedUI(el) {
+  document.querySelectorAll("#modal-body .folder-item").forEach(function(e) {
+    e.classList.remove("selected");
+  });
+  el.classList.add("selected");
+}
+
+// 확인 버튼
+async function confirmFolderAction() {
+  if (_selectedDest === null) {
+    showToast("대상 폴더를 선택하세요.", "error");
+    return;
+  }
+
+  var checked = document.querySelectorAll(".file-check-item:checked");
+  if (checked.length === 0) { showToast("파일을 선택하세요.", "error"); closeFolderModal(); return; }
+
+  var paths = [];
+  checked.forEach(function(cb) { paths.push(cb.dataset.path); });
+
+  var url = _actionMode === "move" ? "/api/move" : "/api/copy";
+  var label = _actionMode === "move" ? "이동" : "복사";
+
+  var res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: PROJECT_KEY, paths: paths, dest: _selectedDest })
+  });
+  var data = await res.json();
+  if (data.ok) {
+    showToast(data.msg, "success");
+    closeFolderModal();
+    setTimeout(function() { location.reload(); }, 800);
+  } else {
+    showToast(data.msg, "error");
+  }
+}
 </script>
 
 </body>

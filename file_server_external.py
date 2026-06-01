@@ -9,7 +9,7 @@ from flask import (Flask, render_template, send_from_directory, send_file,
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
-import secrets, os, io, zipfile, json, smtplib, ssl, random, time
+import secrets, os, io, zipfile, json, smtplib, ssl, random, time, shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
@@ -952,6 +952,120 @@ def api_download_selected():
         as_attachment=True,
         download_name="files.zip",
     )
+
+
+@app.route("/api/list-dirs", methods=["POST"])
+def api_list_dirs():
+    """지정 경로의 하위 폴더 목록 반환 (폴더 트리용)"""
+    data = request.get_json()
+    project_key = data.get("project", "")
+    subpath = data.get("path", "")
+
+    if project_key not in PROJECTS:
+        return jsonify({"ok": False, "dirs": []})
+    if not is_authenticated(project_key):
+        return jsonify({"ok": False, "dirs": []})
+
+    base = SHARED_FOLDER / project_key
+    target = safe_path(base, subpath) if subpath else base
+
+    if not target.is_dir():
+        return jsonify({"ok": False, "dirs": []})
+
+    dirs = []
+    for entry in sorted(target.iterdir()):
+        if entry.is_dir() and entry.name != ".backup":
+            dirs.append(entry.name)
+
+    return jsonify({"ok": True, "dirs": dirs})
+
+
+@app.route("/api/move", methods=["POST"])
+def api_move():
+    """파일/폴더 이동"""
+    data = request.get_json()
+    project_key = data.get("project", "")
+    paths = data.get("paths", [])
+    dest = data.get("dest", "")
+
+    if project_key not in PROJECTS:
+        return jsonify({"ok": False, "msg": "잘못된 프로젝트입니다."})
+    if not is_authenticated(project_key):
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."})
+    if not paths or not dest:
+        return jsonify({"ok": False, "msg": "선택된 파일과 대상 폴더가 필요합니다."})
+
+    base = SHARED_FOLDER / project_key
+    dest_path = safe_path(base, dest)
+
+    if not dest_path.is_dir():
+        return jsonify({"ok": False, "msg": "대상 폴더가 존재하지 않습니다."})
+
+    for idx, p in enumerate(paths):
+        src = safe_path(base, p)
+        if not src.exists():
+            return jsonify({"ok": False, "msg": f"{idx+1}번째 항목 '{Path(p).name}'을(를) 찾을 수 없습니다."})
+
+        target = dest_path / src.name
+        if target.exists():
+            return jsonify({"ok": False, "msg": f"대상 폴더에 '{src.name}'이(가) 이미 존재합니다."})
+
+        try:
+            shutil.move(str(src), str(target))
+        except Exception as e:
+            return jsonify({"ok": False, "msg": f"{idx+1}번째 '{src.name}' 이동 실패: {e}"})
+
+    return jsonify({"ok": True, "msg": f"{len(paths)}개 항목을 이동했습니다."})
+
+
+@app.route("/api/copy", methods=["POST"])
+def api_copy():
+    """파일/폴더 복사"""
+    data = request.get_json()
+    project_key = data.get("project", "")
+    paths = data.get("paths", [])
+    dest = data.get("dest", "")
+
+    if project_key not in PROJECTS:
+        return jsonify({"ok": False, "msg": "잘못된 프로젝트입니다."})
+    if not is_authenticated(project_key):
+        return jsonify({"ok": False, "msg": "인증이 필요합니다."})
+    if not paths or not dest:
+        return jsonify({"ok": False, "msg": "선택된 파일과 대상 폴더가 필요합니다."})
+
+    base = SHARED_FOLDER / project_key
+    dest_path = safe_path(base, dest)
+
+    if not dest_path.is_dir():
+        return jsonify({"ok": False, "msg": "대상 폴더가 존재하지 않습니다."})
+
+    for idx, p in enumerate(paths):
+        src = safe_path(base, p)
+        if not src.exists():
+            return jsonify({"ok": False, "msg": f"{idx+1}번째 항목 '{Path(p).name}'을(를) 찾을 수 없습니다."})
+
+        # 충돌 시 suffix
+        target = dest_path / src.name
+        if target.exists():
+            stem = src.stem
+            suffix = src.suffix
+            counter = 1
+            while True:
+                new_name = f"{stem}_copy{counter}{suffix}" if counter > 1 else f"{stem}_copy{suffix}"
+                target = dest_path / new_name
+                if not target.exists():
+                    break
+                counter += 1
+
+        try:
+            if src.is_file():
+                shutil.copy2(str(src), str(target))
+            else:
+                shutil.copytree(str(src), str(target))
+        except Exception as e:
+            return jsonify({"ok": False, "msg": f"{idx+1}번째 '{src.name}' 복사 실패: {e}"})
+
+    return jsonify({"ok": True, "msg": f"{len(paths)}개 항목을 복사했습니다."})
 
 
 if __name__ == "__main__":
