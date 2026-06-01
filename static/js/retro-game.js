@@ -45,7 +45,7 @@ const RetroGame = (function() {
     container.appendChild(canvas);
     ctx = canvas.getContext('2d');
     resize();
-    bot.x = 90;
+    bot.x = 200;
     resetBotState();
     loadHighScore();
     bindEvents();
