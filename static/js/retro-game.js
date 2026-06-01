@@ -8,8 +8,8 @@ const RetroGame = (function() {
 
   /* ── 상수 ── */
   var H = 140;                       // 캔버스 높이 고정
-  var GRAVITY    = 0.45;
-  var JUMP_VEL   = -7.5;
+  var GRAVITY    = 0.55;
+  var JUMP_VEL   = -8.5;
   var BASE_SPEED = 3;
   var SPEED_INCR = 0.004;            // 점수당 속도 증가
   var MIN_OBS_H  = 18;
@@ -120,13 +120,13 @@ const RetroGame = (function() {
   function startGame() {
     state = 'running';
     resetBotState();
+    doJump();  // 첫 Space로 시작 + 점프 동시에
   }
 
   function doJump() {
     bot.vy = JUMP_VEL;
     bot.grounded = false;
-    if (bot.canDouble) bot.canDouble = false;
-    else bot.canDouble = true;       // 첫 점프 후 더블 기회
+    bot.canDouble = !bot.canDouble;  // 첫 점프→true(더블기회), 더블→false
   }
 
   /* ── 업데이트 ── */
