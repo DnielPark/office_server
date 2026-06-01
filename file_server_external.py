@@ -855,6 +855,23 @@ def local_admin_revoke_token():
 # API 라우트 (JS fetch 전용)
 # ─────────────────────────────────────────────
 
+def _backup_to_dotbackup(base: Path, target: Path) -> Path:
+    """파일/폴더를 .backup으로 이동. 충돌 시 타임스탬프 suffix. 반환: 백업된 경로"""
+    backup_dir = base / ".backup"
+    backup_dir.mkdir(exist_ok=True)
+
+    dest = backup_dir / target.name
+    if dest.exists():
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if target.is_file():
+            dest = backup_dir / f"{target.stem}_{ts}{target.suffix}"
+        else:
+            dest = backup_dir / f"{target.name}_{ts}"
+
+    target.rename(dest)
+    return dest
+
+
 @app.route("/api/mkdir", methods=["POST"])
 def api_mkdir():
     data = request.get_json()
@@ -905,19 +922,7 @@ def api_delete():
         return jsonify({"ok": False, "msg": "존재하지 않는 파일/폴더입니다."})
 
     try:
-        backup_dir = base / ".backup"
-        backup_dir.mkdir(exist_ok=True)
-
-        dest = backup_dir / target.name
-        # 같은 이름 이미 있으면 타임스탬프 추가
-        if dest.exists():
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            if target.is_file():
-                dest = backup_dir / f"{target.stem}_{ts}{target.suffix}"
-            else:
-                dest = backup_dir / f"{target.name}_{ts}"
-
-        target.rename(dest)
+        _backup_to_dotbackup(base, target)
         return jsonify({"ok": True, "msg": f"'{target.name}'을(를) .backup으로 이동했습니다."})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)})
@@ -987,6 +992,7 @@ def api_move():
     project_key = data.get("project", "")
     paths = data.get("paths", [])
     dest = data.get("dest", "")
+    overwrite = data.get("overwrite", False)
 
     if project_key not in PROJECTS:
         return jsonify({"ok": False, "msg": "잘못된 프로젝트입니다."})
@@ -1001,19 +1007,35 @@ def api_move():
     if not dest_path.is_dir():
         return jsonify({"ok": False, "msg": "대상 폴더가 존재하지 않습니다."})
 
-    for idx, p in enumerate(paths):
+    # 1차: 충돌 검사
+    conflicts = []
+    for p in paths:
         src = safe_path(base, p)
         if not src.exists():
-            return jsonify({"ok": False, "msg": f"{idx+1}번째 항목 '{Path(p).name}'을(를) 찾을 수 없습니다."})
-
+            return jsonify({"ok": False, "msg": f"'{src.name}'을(를) 찾을 수 없습니다."})
         target = dest_path / src.name
         if target.exists():
-            return jsonify({"ok": False, "msg": f"대상 폴더에 '{src.name}'이(가) 이미 존재합니다."})
+            conflicts.append(src.name)
+
+    if conflicts and not overwrite:
+        return jsonify({
+            "ok": False, "conflict": True,
+            "conflicts": conflicts,
+            "msg": f"{len(conflicts)}개 파일 충돌"
+        })
+
+    # 2차: 실제 이동 (overwrite 시 기존 파일 백업)
+    for p in paths:
+        src = safe_path(base, p)
+        target = dest_path / src.name
+
+        if target.exists() and overwrite:
+            _backup_to_dotbackup(base, target)
 
         try:
             shutil.move(str(src), str(target))
         except Exception as e:
-            return jsonify({"ok": False, "msg": f"{idx+1}번째 '{src.name}' 이동 실패: {e}"})
+            return jsonify({"ok": False, "msg": f"'{src.name}' 이동 실패: {e}"})
 
     return jsonify({"ok": True, "msg": f"{len(paths)}개 항목을 이동했습니다."})
 

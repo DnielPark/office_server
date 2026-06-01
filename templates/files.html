@@ -784,9 +784,7 @@ function renderFolderTree(dirs, parentPath, container) {
 
   dirs.forEach(function(d) {
     var fullPath = parentPath ? parentPath + "/" + d : d;
-    var isCurrent = (fullPath === currentPath);
-    var isParent = currentPath && (fullPath === currentPath || fullPath.startsWith(currentPath + "/"));
-    var disabled = isCurrent || isParent;
+    var disabled = (fullPath === currentPath);  // 자기 자신만 비활성화
 
     var li = document.createElement("li");
     var item = document.createElement("div");
@@ -862,12 +860,41 @@ async function confirmFolderAction() {
   var url = _actionMode === "move" ? "/api/move" : "/api/copy";
   var label = _actionMode === "move" ? "이동" : "복사";
 
-  var res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ project: PROJECT_KEY, paths: paths, dest: _selectedDest })
-  });
-  var data = await res.json();
+  async function doAction(overwrite) {
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project: PROJECT_KEY, paths: paths, dest: _selectedDest, overwrite: overwrite })
+    });
+    return await res.json();
+  }
+
+  var data = await doAction(false);
+
+  // 충돌 → 확인 팝업 → 재시도
+  if (data.conflict) {
+    var names = data.conflicts || [];
+    var msg = "";
+    if (names.length === 1) {
+      msg = "'" + names[0] + "'이(가) 이미 존재합니다.\n";
+    } else {
+      msg = "'" + names[0] + "' 외 " + (names.length-1) + "개 파일이 이미 존재합니다.\n";
+    }
+    msg += "기존 파일은 .backup\uC73C\uB85C \uBCF4\uC874\uB429\uB2C8\uB2E4.\n\uB36E\uC5B4\uC4F0\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?";
+    if (confirm(msg)) {
+      data = await doAction(true);
+      closeFolderModal();
+      if (data.ok) {
+        showToast(data.msg, "success");
+        setTimeout(function() { location.reload(); }, 1500);
+      } else {
+        showToast(data.msg, "error");
+      }
+    }
+    // 취소 시 모달 유지, reload 안 함
+    return;
+  }
+
   closeFolderModal();
   if (data.ok) {
     showToast(data.msg, "success");
