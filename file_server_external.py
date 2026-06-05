@@ -409,6 +409,17 @@ def index():
 def devnote():
     return render_template("devnote.html", projects=PROJECTS)
 
+@app.route("/devnote/flood-defense")
+def flood_defense_toc():
+    return render_template("flood_defense.html")
+
+
+@app.route("/devnote/flood-defense/<int:section>")
+def flood_defense_section(section):
+    if section < 1 or section > 8:
+        return redirect(url_for("flood_defense_toc"))
+    return render_template(f"flood_defense/section_{section:02d}.html")
+
 @app.route("/auth/<project_key>", methods=["GET", "POST"])
 def auth(project_key):
     if project_key not in PROJECTS:
@@ -1230,6 +1241,111 @@ def api_copy():
         msg = f"{len(paths)}개 항목을 복사했습니다."
 
     return jsonify({"ok": True, "msg": msg})
+
+
+# ─────────────────────────────────────────────
+# AI 채팅 API
+# ─────────────────────────────────────────────
+
+# 프로젝트 정보 데이터 (챗봇이 참고)
+CHAT_PROJECT_INFO = {
+    "sungsan1": {
+        "name": "성산1공구",
+        "desc": "성산천 재해복구사업 제1공구"
+    },
+    "sungsan2": {
+        "name": "성산2공구",
+        "desc": "성산천 재해복구사업 제2공구"
+    },
+    "gudong1": {
+        "name": "구동1공구",
+        "desc": "서천군 재해복구사업 구동지구 제1공구"
+    },
+    "gudong2": {
+        "name": "구동2공구",
+        "desc": "서천군 재해복구사업 구동지구 제2공구"
+    }
+}
+
+CHAT_FLOOD_SECTIONS = [
+    "비상연락망", "수방자재", "장비·인력",
+    "수방조직", "긴급복구", "상황전파",
+    "수위단계별 대응", "복구 우선순위"
+]
+
+
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    """AI 채팅 API — 초간단 프로젝트 도우미"""
+    data = request.get_json()
+    message = data.get("message", "").strip()
+    if not message:
+        return jsonify({"reply": "무엇을 도와드릴까요? 😊"})
+
+    msg = message.lower()
+
+    # ── 인사 ──
+    if any(g in msg for g in ["안녕", "하이", "헬로", "hi", "hello", "반가", "ㅎㅇ"]):
+        return jsonify({
+            "reply": "안녕하세요! 👋 서천군 재해복구사업 개발노트 도우미입니다.\n"
+                     "궁금한 점이 있으면 물어봐 주세요!"
+        })
+
+    # ── 특정 공구 정보 (먼저 체크: 구체적 질문 우선) ──
+    for key, info in CHAT_PROJECT_INFO.items():
+        name_parts = [info["name"]]  # 전체 이름
+        name_parts.append(info["name"][:-3] if len(info["name"]) > 3 else "")  # '성산1공구' -> '성산1'
+        name_parts.append(key)  # 'sungsan1'
+        if any(p and p in msg for p in name_parts):
+            return jsonify({
+                "reply": f"**{info['name']}** ({key})\n{info['desc']}\n\n"
+                         f"파일을 보려면 메인 페이지에서 해당 카드를 클릭하세요."
+            })
+
+    # ── 프로젝트 목록 ──
+    if any(w in msg for w in ["프로젝트", "목록"]):
+        names = "\n".join(f"  • **{k}** — {v['name']}" for k, v in CHAT_PROJECT_INFO.items())
+        return jsonify({
+            "reply": f"현재 등록된 프로젝트입니다: \n{names}\n\n"
+                     f"각 프로젝트를 클릭하면 파일을 열람할 수 있습니다. (비밀번호 필요)"
+        })
+
+    # ── 수방대책 ──
+    if any(w in msg for w in ["수방", "홍수", "태풍", "대책", "flood"]):
+        sections = "\n".join(f"  {i+1}. {s}" for i, s in enumerate(CHAT_FLOOD_SECTIONS))
+        return jsonify({
+            "reply": f"🌊 **사업관리단 수방대책** — {len(CHAT_FLOOD_SECTIONS)}개 섹션\n{sections}\n\n"
+                     f"메인 페이지 하단의 '사업관리단 수방대책' 링크를 클릭하세요."
+        })
+
+    # ── 도움말 ──
+    if any(w in msg for w in ["도움", "뭐 할 수", "help", "명령", "가능"]):
+        return jsonify({
+            "reply": "💡 **할 수 있는 일**\n"
+                     "  • 프로젝트 목록 보기\n"
+                     "  • 각 공구 정보 확인 (성산1, 성산2, 구동1, 구동2)\n"
+                     "  • 수방대책 정보\n"
+                     "  • 간단한 대화\n\n"
+                     "궁금한 걸 물어보세요!"
+        })
+
+    # ── 사이트 정보 ──
+    if any(w in msg for w in ["사이트", "이 페이지", "여기", "개발노트"]):
+        return jsonify({
+            "reply": "🗂️ **서천군 재해복구사업 개발노트**\n"
+                     "이 페이지는 성산천 사업관리단의 내부 자료 공유 사이트입니다.\n"
+                     "각 공구별 문서(작업일보, 안전일지, 시방서 등)를 열람하고 다운로드할 수 있습니다."
+        })
+
+    # ── 작별 ──
+    if any(w in msg for w in ["잘가", "바이", "by", "종료", "끝"]):
+        return jsonify({"reply": "네, 필요한 게 있으면 언제든 불러주세요! 😊"})
+
+    # ── 기본 응답 ──
+    return jsonify({
+        "reply": "질문을 잘 이해하지 못했어요. 😅\n"
+                 "'도움말'이라고 입력하시면 제가 할 수 있는 일을 알려드릴게요!"
+    })
 
 
 if __name__ == "__main__":
