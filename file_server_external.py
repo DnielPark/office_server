@@ -403,7 +403,11 @@ def needs_challenge(project_key):
 # ─────────────────────────────────────────────
 @app.route("/")
 def index():
-    return render_template("index.html", projects=PROJECTS)
+    resp = make_response(render_template("index.html", projects=PROJECTS))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/devnote")
