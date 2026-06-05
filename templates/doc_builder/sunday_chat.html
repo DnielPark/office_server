@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>일요일 공사 승인 요청서 — 문서 작성기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #2f81f7;
+      --accent2: #388bfd;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --success: #3fb950;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── 상단 바 ── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #0d1117;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .top-bar .back-btn {
+      font-size: 13px; color: var(--muted);
+      background: none; border: none; cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      display: flex; align-items: center; gap: 4px;
+      transition: color .15s;
+    }
+    .top-bar .back-btn:hover { color: var(--accent); }
+    .top-bar .title { flex: 1; font-size: 14px; font-weight: 500; }
+    .top-bar .title small { color: var(--muted); font-weight: 400; font-size: 12px; }
+    #print-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: 'Noto Sans KR', sans-serif;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    #print-btn.active {
+      color: var(--text);
+      border-color: var(--accent);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #print-btn.active:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── 메인 레이아웃 ── */
+    .main-layout {
+      display: flex;
+      height: calc(100vh - 50px);
+    }
+
+    /* ── 왼쪽: 문서 미리보기 ── */
+    .preview-panel {
+      width: 50%;
+      overflow-y: auto;
+      padding: 24px;
+      background: #0d1117;
+      border-right: 1px solid var(--border);
+    }
+    .preview-panel::-webkit-scrollbar { width: 5px; }
+    .preview-panel::-webkit-scrollbar-track { background: transparent; }
+    .preview-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* A4 용지 */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 20mm 25mm;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      font-size: 11pt;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .a4-page h1 {
+      font-size: 18pt;
+      text-align: center;
+      margin-bottom: 20pt;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .a4-page .doc-number {
+      text-align: right;
+      font-size: 9pt;
+      color: #666;
+      margin-bottom: 12pt;
+    }
+    .a4-page table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8pt;
+    }
+    .a4-page table th,
+    .a4-page table td {
+      border: 1px solid #333;
+      padding: 6pt 10pt;
+      text-align: left;
+      font-size: 10pt;
+      vertical-align: top;
+    }
+    .a4-page table th {
+      background: #f0f4f8;
+      font-weight: 600;
+      width: 28%;
+      white-space: nowrap;
+    }
+    .a4-page table td {
+      width: 72%;
+    }
+
+    .field-value {
+      min-height: 18pt;
+      transition: background .4s, color .4s;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+    .field-value.empty {
+      color: #999;
+      border-bottom: 1px dashed #bbb;
+    }
+    .field-value.filled {
+      color: #1a1a1a;
+    }
+    .field-value.highlight {
+      background: #fff3cd;
+      transition: background 0s;
+    }
+    .field-value.done-highlight {
+      background: #d4edda;
+      transition: background 0s;
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 7pt;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+    .status-badge.pending { background: #fff3cd; color: #856404; }
+    .status-badge.done { background: #d4edda; color: #155724; }
+
+    .a4-footer {
+      text-align: center;
+      font-size: 8pt;
+      color: #999;
+      margin-top: 24pt;
+      padding-top: 12pt;
+      border-top: 1px solid #ddd;
+    }
+
+    /* ── 오른쪽: 채팅 패널 ── */
+    .chat-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+    }
+    .chat-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: #1c2333;
+      flex-shrink: 0;
+    }
+    .chat-header .ai-name {
+      font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chat-header .ai-name .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success); display: inline-block;
+    }
+    .chat-header .ai-desc {
+      font-size: 11px; color: var(--muted); margin-top: 2px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      animation: msgIn .25s ease-out;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: #1c2333;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px 12px 12px 4px;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 12px 12px 4px 12px;
+    }
+    .msg.system {
+      align-self: center;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+      border: none;
+      padding: 4px 8px;
+    }
+
+    .typing {
+      align-self: flex-start;
+      display: flex; gap: 4px;
+      padding: 12px 16px;
+      background: #1c2333;
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 12px 4px;
+    }
+    .typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--muted);
+      animation: dotBounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dotBounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .chat-input-area input {
+      flex: 1;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0d1117;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: border-color .15s;
+    }
+    .chat-input-area input:focus { border-color: var(--accent); }
+    .chat-input-area input::placeholder { color: #484f58; }
+    .chat-input-area .btn-group {
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .chat-input-area button {
+      width: 38px; height: 38px;
+      border-radius: 8px; border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: background .15s;
+    }
+    .chat-input-area #send-btn {
+      background: var(--accent);
+      color: #fff;
+    }
+    .chat-input-area #send-btn:hover { background: var(--accent2); }
+    .chat-input-area #send-btn:disabled { opacity: 0.5; cursor: default; }
+    .chat-input-area #attach-btn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .chat-input-area #attach-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── 미디어 출력 ── */
+    @media print {
+      body { background: #fff; overflow: visible; }
+      .top-bar { display: none; }
+      .chat-panel { display: none; }
+      .preview-panel {
+        width: 100%;
+        border: none;
+        padding: 0;
+        overflow: visible;
+      }
+      .a4-page {
+        box-shadow: none;
+        margin: 0;
+        padding: 15mm 20mm;
+      }
+      .field-value.highlight,
+      .field-value.done-highlight {
+        background: transparent !important;
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 바 -->
+  <div class="top-bar">
+    <button class="back-btn" onclick="window.location.href='/devnote/doc-builder'">← 문서 목록</button>
+    <div class="title">
+      📋 일요일 공사 승인 요청서
+      <small id="progress-text">0/10 항목</small>
+    </div>
+    <button id="print-btn" onclick="window.print()">🖨 PDF 출력</button>
+  </div>
+
+  <!-- 메인 레이아웃 -->
+  <div class="main-layout">
+    <!-- 왼쪽: A4 미리보기 -->
+    <div class="preview-panel" id="preview-panel">
+      <div class="a4-page" id="a4-page">
+
+        <!-- 헤더 영역 -->
+        <div class="doc-number">문서번호: <span id="doc-number">성산-승인-________</span></div>
+        <h1>일요일 공사 승인 요청서</h1>
+
+        <table>
+          <tr>
+            <th>공사 예정일</th>
+            <td><span class="field-value empty" data-field="work_date" data-placeholder="예: 2026-06-07">____________</span></td>
+          </tr>
+          <tr>
+            <th>작업 시간</th>
+            <td><span class="field-value empty" data-field="work_time" data-placeholder="예: 09:00 ~ 18:00">____________</span></td>
+          </tr>
+          <tr>
+            <th>공사 위치</th>
+            <td><span class="field-value empty" data-field="location" data-placeholder="예: 성산천 제1공구 2.5km 지점">____________</span></td>
+          </tr>
+          <tr>
+            <th>일요일 작업 사유</th>
+            <td><span class="field-value empty" data-field="work_reason" data-placeholder="사유 선택">____________</span></td>
+          </tr>
+          <tr>
+            <th>주요 작업 내용</th>
+            <td><span class="field-value empty" data-field="main_work_content" data-placeholder="예: 토사 반출 및 호안 블록 설치">____________</span></td>
+          </tr>
+          <tr>
+            <th>안전 관리 계획</th>
+            <td><span class="field-value empty" data-field="safety_plan" data-placeholder="예: 안전 관리자 배치, 작업 전 안전 교육">____________</span></td>
+          </tr>
+          <tr>
+            <th>투입 인원</th>
+            <td><span class="field-value empty" data-field="worker_count" data-placeholder="예: 8명">____________</span></td>
+          </tr>
+          <tr>
+            <th>투입 장비</th>
+            <td><span class="field-value empty" data-field="equipment" data-placeholder="예: 굴삭기 2대, 덤프트럭 5대">____________</span></td>
+          </tr>
+          <tr>
+            <th>현장 책임자</th>
+            <td><span class="field-value empty" data-field="site_manager" data-placeholder="예: 홍길동 (010-1234-5678)">____________</span></td>
+          </tr>
+          <tr>
+            <th>비상 연락망 / 대처 계획</th>
+            <td><span class="field-value empty" data-field="emergency_plan" data-placeholder="예: 비상 연락처, 인근 병원, 화재 대비">____________</span></td>
+          </tr>
+          <!-- 서명란 -->
+          <tr>
+            <th>신청인</th>
+            <td><span class="field-value empty" data-field="applicant" data-placeholder="성명">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
+          </tr>
+          <tr>
+            <th>현장 소장 확인</th>
+            <td><span style="color:#999; font-size:9pt;">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
+          </tr>
+          <tr>
+            <th>안전 관리자 확인</th>
+            <td><span style="color:#999; font-size:9pt;">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 12pt;">
+          <p style="font-size: 9pt; color: #666;">
+            본인은 상기와 같이 일요일(공휴일) 공사를 수행하고자 하오며,<br>
+            작업 중 안전 관리 및 사고 예방에 만전을 기할 것을 서약합니다.
+          </p>
+        </div>
+
+        <div class="a4-footer">
+          <span id="footer-date">20____년 ____월 ____일</span><br>
+          <strong>성산천 사업관리단 귀중</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 채팅 패널 -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="ai-name">
+          <span class="dot"></span>
+          AI 문서 도우미
+        </div>
+        <div class="ai-desc">일요일 공사 승인 요청서 작성 (Phase 2 · Beta)</div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages"></div>
+
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off">
+        <div class="btn-group">
+          <button id="attach-btn" title="사진 첨부" onclick="alert('사진 첨부는 Phase 3에서 지원됩니다')">📷</button>
+          <button id="send-btn">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── 상태 ── */
+    var API_URL = '/devnote/doc-builder/sunday/chat';
+    var fields = {};
+    var completedFields = {};
+    var requiredFields = [
+      'work_date', 'work_time', 'location', 'work_reason',
+      'main_work_content', 'safety_plan', 'worker_count',
+      'equipment', 'site_manager', 'emergency_plan'
+    ];
+    var messages = [];
+
+    /* ── DOM ── */
+    var chatEl = document.getElementById('chat-messages');
+    var inputEl = document.getElementById('chat-input');
+    var sendBtn = document.getElementById('send-btn');
+    var printBtn = document.getElementById('print-btn');
+    var progressText = document.getElementById('progress-text');
+
+    /* ── 유틸 ── */
+    function scrollChat() {
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function addMessage(text, role) {
+      var div = document.createElement('div');
+      div.className = 'msg ' + role;
+      div.textContent = text;
+      chatEl.appendChild(div);
+      scrollChat();
+    }
+
+    function showTyping() {
+      var div = document.createElement('div');
+      div.className = 'typing';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      chatEl.appendChild(div);
+      scrollChat();
+    }
+
+    function hideTyping() {
+      var el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    function updateProgress() {
+      var done = Object.keys(completedFields).length;
+      progressText.textContent = done + '/' + requiredFields.length + ' 항목';
+      if (done >= requiredFields.length) {
+        printBtn.classList.add('active');
+        printBtn.textContent = '🖨 PDF 출력';
+      }
+    }
+
+    function setField(fieldKey, value) {
+      var el = document.querySelector('[data-field="' + fieldKey + '"]');
+      if (!el) return;
+
+      var val = String(value || '');
+      if (!val) return;
+
+      el.textContent = val;
+      el.classList.remove('empty');
+
+      // 하이라이트 애니메이션
+      el.classList.remove('highlight', 'done-highlight');
+      void el.offsetWidth; // 리플로우 강제
+      if (completedFields[fieldKey]) {
+        el.classList.add('done-highlight');
+      } else {
+        el.classList.add('highlight');
+      }
+      setTimeout(function() {
+        el.classList.remove('highlight');
+      }, 1500);
+
+      // 완료 상태 업데이트
+      completedFields[fieldKey] = true;
+      updateProgress();
+    }
+
+    function applyFields(newFields) {
+      if (!newFields) return;
+      Object.keys(newFields).forEach(function(key) {
+        if (newFields[key] !== null && newFields[key] !== undefined && newFields[key] !== '') {
+          var val = newFields[key];
+          if (Array.isArray(val)) {
+            val = val.join(', ');
+          }
+          setField(key, val);
+        }
+      });
+    }
+
+    /* ── API 호출 ── */
+    function sendMessage(text) {
+      if (!text.trim()) return;
+      inputEl.value = '';
+      addMessage(text, 'user');
+
+      // 현재 필드 상태 수집
+      var currentFields = {};
+      requiredFields.forEach(function(key) {
+        var el = document.querySelector('[data-field="' + key + '"]');
+        if (el && !el.classList.contains('empty')) {
+          currentFields[key] = el.textContent;
+        } else {
+          currentFields[key] = null;
+        }
+      });
+
+      messages.push({ role: 'user', content: text });
+
+      showTyping();
+      inputEl.disabled = true;
+      sendBtn.disabled = true;
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', API_URL, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() {
+        hideTyping();
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            messages.push({ role: 'assistant', content: data.reply });
+            addMessage(data.reply, 'bot');
+            if (data.fields) {
+              applyFields(data.fields);
+            }
+            if (data.next_question === null) {
+              addMessage('✅ 모든 항목이 작성되었습니다. 상단의 "PDF 출력" 버튼을 눌러 출력하세요.', 'system');
+            }
+          } catch (e) {
+            addMessage('응답 처리 중 오류가 발생했습니다.', 'bot');
+          }
+        } else {
+          addMessage('서버 통신 오류 (' + xhr.status + ')', 'bot');
+        }
+      };
+      xhr.onerror = function() {
+        hideTyping();
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        addMessage('네트워크 오류가 발생했습니다.', 'bot');
+      };
+      xhr.send(JSON.stringify({
+        messages: messages,
+        current_fields: currentFields
+      }));
+    }
+
+    /* ── 이벤트 ── */
+    sendBtn.addEventListener('click', function() {
+      sendMessage(inputEl.value);
+    });
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage(inputEl.value);
+      }
+    });
+
+    /* ── 초기화: AI 첫 메시지 ── */
+    function init() {
+      showTyping();
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', API_URL, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() {
+        hideTyping();
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            messages.push({ role: 'assistant', content: data.reply });
+            addMessage(data.reply, 'bot');
+            if (data.fields) {
+              applyFields(data.fields);
+            }
+          } catch (e) {
+            addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
+            messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
+          }
+        } else {
+          addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
+          messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
+        }
+        inputEl.focus();
+      };
+      xhr.onerror = function() {
+        hideTyping();
+        addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
+        messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
+        inputEl.focus();
+      };
+      xhr.send(JSON.stringify({
+        messages: [],
+        current_fields: {},
+        first_message: true
+      }));
+      updateProgress();
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

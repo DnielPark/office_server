@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <title>문서 작성기 — 서천군 재해복구사업</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #2f81f7;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: var(--accent); text-decoration: none; }
+
+    .wrapper {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    .page-header { text-align: center; margin-bottom: 48px; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted); margin-bottom: 24px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+    .page-desc { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+    .card-grid { display: grid; gap: 16px; }
+
+    .doc-card {
+      background: rgba(22,27,34,0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+      display: block;
+      color: var(--text);
+      transition: border-color .18s, transform .18s, box-shadow .18s;
+    }
+    .doc-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0; transition: opacity .18s;
+    }
+    .doc-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(47,129,247,0.15);
+    }
+    .doc-card:hover::before { opacity: 1; }
+
+    .doc-icon { font-size: 28px; margin-bottom: 12px; }
+    .doc-name { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .doc-desc { font-size: 12px; color: var(--muted); }
+    .doc-tag {
+      display: inline-block;
+      font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+      background: rgba(47,129,247,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(47,129,247,0.25);
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-top: 12px;
+    }
+
+    .page-footer {
+      text-align: center; margin-top: 56px;
+      font-size: 12px; color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="page-header">
+      <a href="/devnote" class="back-link">← 개발노트로 돌아가기</a>
+      <h1 class="page-title">📄 문서 작성기</h1>
+      <p class="page-desc">AI 채팅으로 현장 문서를 빠르게 작성하세요</p>
+    </header>
+
+    <div class="card-grid">
+      <a href="/devnote/doc-builder/sunday" class="doc-card">
+        <div class="doc-icon">📋</div>
+        <div class="doc-name">일요일 공사 승인 요청서</div>
+        <div class="doc-desc">일요일 및 공휴일 공사 계획서를 AI와 대화하며 작성합니다.<br>공사 예정일, 작업 내용, 안전 계획 등을 입력하면 자동으로 양식을 채워드립니다.</div>
+        <span class="doc-tag">Phase 2 · Beta</span>
+      </a>
+      <!-- 추가 문서 타입은 여기에 -->
+    </div>
+
+    <footer class="page-footer">
+      © 2026 성산천 사업관리단 · 문서 작성기
+    </footer>
+  </div>
+</body>
+</html>

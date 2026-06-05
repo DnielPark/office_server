@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "일요일 공사 승인 요청서",
+  "description": "건설 현장 일요일 공사 승인 요청을 위한 양식",
+  "fields": {
+    "work_date": {
+      "label": "공사 예정일",
+      "type": "string",
+      "format": "date",
+      "required": true,
+      "placeholder": "예: 2026-06-07"
+    },
+    "work_time": {
+      "label": "작업 시간",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 09:00 ~ 18:00"
+    },
+    "location": {
+      "label": "공사 위치",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 성산천 제1공구 2.5km 지점"
+    },
+    "work_reason": {
+      "label": "일요일 작업 사유",
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "긴급 보수",
+          "공기 부족",
+          "장비 일정",
+          "교통 통제 필요",
+          "기타"
+        ]
+      },
+      "placeholder": "사유 선택"
+    },
+    "main_work_content": {
+      "label": "주요 작업 내용",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 토사 반출 및 호안 블록 설치"
+    },
+    "safety_plan": {
+      "label": "안전 관리 계획",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 안전 관리자 배치, 작업 전 안전 교육 실시"
+    },
+    "worker_count": {
+      "label": "투입 인원",
+      "type": "integer",
+      "required": true,
+      "placeholder": "예: 8명"
+    },
+    "equipment": {
+      "label": "투입 장비",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 굴삭기 2대, 덤프트럭 5대"
+    },
+    "site_manager": {
+      "label": "현장 책임자",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 홍길동 (010-1234-5678)"
+    },
+    "emergency_plan": {
+      "label": "비상 연락망 / 대처 계획",
+      "type": "string",
+      "required": true,
+      "placeholder": "예: 비시 연락처, 인근 병원, 화재 대비 소화기 배치"
+    }
+  },
+  "required": [
+    "work_date",
+    "work_time",
+    "location",
+    "work_reason",
+    "main_work_content",
+    "safety_plan",
+    "worker_count",
+    "equipment",
+    "site_manager",
+    "emergency_plan"
+  ]
+}

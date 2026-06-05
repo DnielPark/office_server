@@ -420,6 +420,113 @@ def flood_defense_section(section):
         return redirect(url_for("flood_defense_toc"))
     return render_template(f"flood_defense/section_{section:02d}.html")
 
+
+@app.route("/devnote/doc-builder")
+def doc_builder_index():
+    return render_template("doc_builder/index.html")
+
+
+@app.route("/devnote/doc-builder/sunday")
+def doc_builder_sunday():
+    return render_template("doc_builder/sunday_chat.html")
+
+
+@app.route("/devnote/doc-builder/sunday/chat", methods=["POST"])
+def doc_builder_sunday_chat():
+    """일요일 공사 승인 요청서 채팅 API (Phase 2 — mock)"""
+    data = request.get_json(force=True)
+    messages = data.get("messages", [])
+    current_fields = data.get("current_fields", {})
+    is_first = data.get("first_message", False)
+
+    if is_first or not messages:
+        return jsonify({
+            "reply": "안녕하세요! 📋 일요일 공사 승인 요청서 작성을 도와드리겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**부터 알려주시겠어요?",
+            "fields": {},
+            "next_question": "work_date"
+        })
+
+    # 사용자 메시지 파싱
+    user_msg = messages[-1]["content"] if messages else ""
+    msg_lower = user_msg.lower()
+
+    # ── 응답 생성 (임시 mock — Phase 3에서 Claude API로 교체 예정) ──
+    reply = None
+    new_fields = {}
+    next_q = None
+    required_fields = [
+        "work_date", "work_time", "location", "work_reason",
+        "main_work_content", "safety_plan", "worker_count",
+        "equipment", "site_manager", "emergency_plan"
+    ]
+
+    import re
+
+    # 날짜 감지
+    date_match = re.search(r"(\d{4}[-년]\s*\d{1,2}[-월]\s*\d{1,2})|(\d{1,2}월\s*\d{1,2}일)", user_msg)
+    if date_match and not current_fields.get("work_date"):
+        new_fields["work_date"] = date_match.group(0).replace("년", "-").replace("월", "-").replace("일", "")
+        reply = "날짜를 확인했습니다! ✅\n\n그럼 **작업 시간**은 어떻게 되나요? (예: 09:00 ~ 18:00)"
+        next_q = "work_time"
+
+    # 시간 감지
+    time_match = re.search(r"(\d{1,2}[.:]\d{2})\s*[~∼\-]\s*(\d{1,2}[.:]\d{2})", user_msg)
+    if time_match and not current_fields.get("work_time") and reply is None:
+        new_fields["work_time"] = time_match.group(0)
+        reply = "작업 시간을 확인했습니다! ✅\n\n**공사 위치**는 어디인가요?"
+        next_q = "location"
+
+    # 위치 감지 (간단)
+    if any(w in user_msg for w in ["성산", "구동", "공구", "지점", "km"]):
+        if not current_fields.get("location") and reply is None:
+            # 메시지에서 위치 부분 추출
+            loc = user_msg
+            if len(loc) > 20:
+                loc = loc[:20] + "..."
+            new_fields["location"] = loc.strip()
+            reply = "위치를 확인했습니다! ✅\n\n**일요일 작업 사유**는 무엇인가요? (긴급 보수, 공기 부족, 장비 일정, 교통 통제 필요 등)"
+            next_q = "work_reason"
+
+    # 작업 사유 감지
+    reasons = ["긴급 보수", "긴급", "공기 부족", "공기", "장비 일정", "장비", "교통 통제"]
+    found_reasons = [r for r in reasons if r in user_msg]
+    if found_reasons and not current_fields.get("work_reason") and reply is None:
+        new_fields["work_reason"] = found_reasons
+        reply = "작업 사유를 확인했습니다! ✅\n\n**주요 작업 내용**은 무엇인가요? (예: 토사 반출 및 호안 블록 설치)"
+        next_q = "main_work_content"
+
+    # 기본 응답 (아직 매칭 안 됨)
+    if reply is None:
+        # 이미 채워진 필드 확인하고 다음 질문으로
+        for field in required_fields:
+            if not current_fields.get(field):
+                prompts = {
+                    "work_date": "**공사 예정일**이 어떻게 되나요?",
+                    "work_time": "**작업 시간**은 어떻게 되나요?",
+                    "location": "**공사 위치**는 어디인가요?",
+                    "work_reason": "**일요일 작업 사유**는 무엇인가요?",
+                    "main_work_content": "**주요 작업 내용**을 알려주세요.",
+                    "safety_plan": "**안전 관리 계획**은 어떻게 되나요?",
+                    "worker_count": "**투입 인원**은 몇 명인가요?",
+                    "equipment": "**투입 장비**는 무엇이 있나요?",
+                    "site_manager": "**현장 책임자**는 누구인가요?",
+                    "emergency_plan": "**비상 연락망 및 대처 계획**을 알려주세요."
+                }
+                reply = f"알겠습니다. 감사합니다! 👍\n\n그럼 {prompts.get(field, '다음 항목을 알려주세요.')}"
+                next_q = field
+                break
+
+        if reply is None:
+            reply = "✅ 모든 항목이 작성되었습니다! 상단의 **PDF 출력** 버튼을 눌러 출력하세요."
+            next_q = None
+
+    return jsonify({
+        "reply": reply,
+        "fields": new_fields,
+        "next_question": next_q
+    })
+
+
 @app.route("/auth/<project_key>", methods=["GET", "POST"])
 def auth(project_key):
     if project_key not in PROJECTS:
