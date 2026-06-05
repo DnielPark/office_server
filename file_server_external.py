@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 import secrets, os, io, zipfile, json, smtplib, ssl, random, time, shutil, tempfile
+from openai import OpenAI
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
@@ -433,98 +434,69 @@ def doc_builder_sunday():
 
 @app.route("/devnote/doc-builder/sunday/chat", methods=["POST"])
 def doc_builder_sunday_chat():
-    """일요일 공사 승인 요청서 채팅 API (Phase 2 — mock)"""
+    """일요일 공사 승인 요청서 채팅 API (Phase 2-fix: DeepSeek V3)"""
     data = request.get_json(force=True)
     messages = data.get("messages", [])
-    current_fields = data.get("current_fields", {})
-    is_first = data.get("first_message", False)
 
-    if is_first or not messages:
+    SUNDAY_CHAT_SYSTEM = (
+        "당신은 건설 현장 문서 작성 보조 AI입니다.\n"
+        "사용자와 대화하며 일요일 공사 승인 요청서의 필드를 하나씩 채워나갑니다.\n"
+        "응답은 반드시 JSON으로만 반환합니다:\n"
+        "{\n"
+        '  "reply": "사용자에게 보여줄 자연어 메시지",\n'
+        '  "fields": {\n'
+        '    "work_date": null 또는 "채워진 값",\n'
+        '    "work_time": null 또는 "채워진 값",\n'
+        '    "location": null 또는 "채워진 값",\n'
+        '    "work_reason": null 또는 ["reason_2"],\n'
+        '    "main_work_content": null 또는 "채워진 값",\n'
+        '    "safety_plan": null 또는 "채워진 값",\n'
+        '    "worker_count": null 또는 "채워진 값",\n'
+        '    "equipment": null 또는 "채워진 값",\n'
+        '    "site_manager": null 또는 "채워진 값",\n'
+        '    "emergency_plan": null 또는 "채워진 값"\n'
+        "  },\n"
+        '  "next_question": "다음으로 물어볼 항목 key 또는 null(완료)"\n'
+        "}\n"
+        "미입력 필드는 null, 완료된 필드는 이전 값 유지.\n"
+        "JSON 외 다른 텍스트 절대 출력 금지."
+    )
+
+    try:
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            return jsonify({
+                "reply": "⚠️ DeepSeek API 키가 설정되지 않았습니다. 관리자에게 문의하세요.",
+                "fields": {},
+                "next_question": None
+            })
+
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com"
+        )
+
+        api_messages = [{"role": "system", "content": SUNDAY_CHAT_SYSTEM}]
+        for m in messages:
+            api_messages.append({"role": m["role"], "content": m["content"]})
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=api_messages,
+            response_format={"type": "json_object"},
+            max_tokens=1000
+        )
+
+        result = json.loads(response.choices[0].message.content)
+        return jsonify(result)
+
+    except Exception as e:
+        app.logger.error(f"DeepSeek API error: {e}")
         return jsonify({
-            "reply": "안녕하세요! 📋 일요일 공사 승인 요청서 작성을 도와드리겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**부터 알려주시겠어요?",
+            "reply": "서버 오류가 발생했습니다. 다시 시도해주세요.",
             "fields": {},
-            "next_question": "work_date"
+            "next_question": None
         })
-
-    # 사용자 메시지 파싱
-    user_msg = messages[-1]["content"] if messages else ""
-    msg_lower = user_msg.lower()
-
-    # ── 응답 생성 (임시 mock — Phase 3에서 Claude API로 교체 예정) ──
-    reply = None
-    new_fields = {}
-    next_q = None
-    required_fields = [
-        "work_date", "work_time", "location", "work_reason",
-        "main_work_content", "safety_plan", "worker_count",
-        "equipment", "site_manager", "emergency_plan"
-    ]
-
-    import re
-
-    # 날짜 감지
-    date_match = re.search(r"(\d{4}[-년]\s*\d{1,2}[-월]\s*\d{1,2})|(\d{1,2}월\s*\d{1,2}일)", user_msg)
-    if date_match and not current_fields.get("work_date"):
-        new_fields["work_date"] = date_match.group(0).replace("년", "-").replace("월", "-").replace("일", "")
-        reply = "날짜를 확인했습니다! ✅\n\n그럼 **작업 시간**은 어떻게 되나요? (예: 09:00 ~ 18:00)"
-        next_q = "work_time"
-
-    # 시간 감지
-    time_match = re.search(r"(\d{1,2}[.:]\d{2})\s*[~∼\-]\s*(\d{1,2}[.:]\d{2})", user_msg)
-    if time_match and not current_fields.get("work_time") and reply is None:
-        new_fields["work_time"] = time_match.group(0)
-        reply = "작업 시간을 확인했습니다! ✅\n\n**공사 위치**는 어디인가요?"
-        next_q = "location"
-
-    # 위치 감지 (간단)
-    if any(w in user_msg for w in ["성산", "구동", "공구", "지점", "km"]):
-        if not current_fields.get("location") and reply is None:
-            # 메시지에서 위치 부분 추출
-            loc = user_msg
-            if len(loc) > 20:
-                loc = loc[:20] + "..."
-            new_fields["location"] = loc.strip()
-            reply = "위치를 확인했습니다! ✅\n\n**일요일 작업 사유**는 무엇인가요? (긴급 보수, 공기 부족, 장비 일정, 교통 통제 필요 등)"
-            next_q = "work_reason"
-
-    # 작업 사유 감지
-    reasons = ["긴급 보수", "긴급", "공기 부족", "공기", "장비 일정", "장비", "교통 통제"]
-    found_reasons = [r for r in reasons if r in user_msg]
-    if found_reasons and not current_fields.get("work_reason") and reply is None:
-        new_fields["work_reason"] = found_reasons
-        reply = "작업 사유를 확인했습니다! ✅\n\n**주요 작업 내용**은 무엇인가요? (예: 토사 반출 및 호안 블록 설치)"
-        next_q = "main_work_content"
-
-    # 기본 응답 (아직 매칭 안 됨)
-    if reply is None:
-        # 이미 채워진 필드 확인하고 다음 질문으로
-        for field in required_fields:
-            if not current_fields.get(field):
-                prompts = {
-                    "work_date": "**공사 예정일**이 어떻게 되나요?",
-                    "work_time": "**작업 시간**은 어떻게 되나요?",
-                    "location": "**공사 위치**는 어디인가요?",
-                    "work_reason": "**일요일 작업 사유**는 무엇인가요?",
-                    "main_work_content": "**주요 작업 내용**을 알려주세요.",
-                    "safety_plan": "**안전 관리 계획**은 어떻게 되나요?",
-                    "worker_count": "**투입 인원**은 몇 명인가요?",
-                    "equipment": "**투입 장비**는 무엇이 있나요?",
-                    "site_manager": "**현장 책임자**는 누구인가요?",
-                    "emergency_plan": "**비상 연락망 및 대처 계획**을 알려주세요."
-                }
-                reply = f"알겠습니다. 감사합니다! 👍\n\n그럼 {prompts.get(field, '다음 항목을 알려주세요.')}"
-                next_q = field
-                break
-
-        if reply is None:
-            reply = "✅ 모든 항목이 작성되었습니다! 상단의 **PDF 출력** 버튼을 눌러 출력하세요."
-            next_q = None
-
-    return jsonify({
-        "reply": reply,
-        "fields": new_fields,
-        "next_question": next_q
-    })
 
 
 @app.route("/auth/<project_key>", methods=["GET", "POST"])
