@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일요일 공사 승인 요청서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+ /* ── 전역 리셋 ── */
+ *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+ :root {
+ --black: #111111;
+ --dark: #2a2a2a;
+ --mid: #555555;
+ --light: #888888;
+ --rule: #c0c0c0;
+ --pale: #e8e8e8;
+ --bg: #f4f4f2;
+ --white: #ffffff;
+ --fill-empty: #f9f9f9;
+
+ --serif: 'Noto Serif KR', 'Batang', serif;
+ --sans: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+ }
+
+ /* ── A4 페이지 기본 ── */
+ html, body {
+ background: var(--bg);
+ font-family: var(--sans);
+ color: var(--black);
+ }
+
+ .a4-page {
+ width: 210mm;
+ min-height: 297mm;
+ margin: 0 auto;
+ background: var(--white);
+ padding: 18mm 16mm 20mm 18mm;
+ position: relative;
+ }
+
+ /* ── 인쇄 설정 ── */
+ @media print {
+ html, body { background: white; }
+ .a4-page {
+ width: 100%;
+ min-height: 100vh;
+ margin: 0;
+ padding: 15mm 14mm 18mm 16mm;
+ box-shadow: none;
+ }
+ .field-value.empty::after { display: none; }
+ .field-value.empty { border-bottom-color: #999; }
+ }
+
+ /* ══════════════════════════════════
+ 문서 헤더
+ ══════════════════════════════════ */
+ .doc-header {
+ text-align: center;
+ padding-bottom: 10mm;
+ border-bottom: 2.5px solid var(--black);
+ margin-bottom: 7mm;
+ position: relative;
+ }
+
+ .doc-header::before {
+ content: '';
+ display: block;
+ width: 28mm;
+ height: 2px;
+ background: var(--black);
+ margin: 0 auto 4mm;
+ }
+
+ .doc-title {
+ font-family: var(--serif);
+ font-size: 22pt;
+ font-weight: 700;
+ letter-spacing: 0.15em;
+ color: var(--black);
+ line-height: 1.2;
+ }
+
+ .doc-subtitle {
+ font-size: 8pt;
+ color: var(--light);
+ letter-spacing: 0.3em;
+ margin-top: 2mm;
+ text-transform: uppercase;
+ font-weight: 300;
+ }
+
+ /* ══════════════════════════════════
+ 섹션 공통
+ ══════════════════════════════════ */
+ .section {
+ margin-bottom: 5.5mm;
+ }
+
+ .section-label {
+ font-family: var(--serif);
+ font-size: 9.5pt;
+ font-weight: 600;
+ color: var(--dark);
+ letter-spacing: 0.08em;
+ padding: 1.5mm 3mm 1.5mm 2.5mm;
+ border-left: 3px solid var(--black);
+ background: var(--pale);
+ margin-bottom: 3mm;
+ display: flex;
+ align-items: center;
+ gap: 2mm;
+ }
+
+ .section-label .section-no {
+ font-size: 7.5pt;
+ color: var(--light);
+ font-family: var(--sans);
+ font-weight: 400;
+ letter-spacing: 0.05em;
+ }
+
+ /* ══════════════════════════════════
+ 가. 공사개요 — 그리드 레이아웃
+ ══════════════════════════════════ */
+ .overview-grid {
+ display: grid;
+ grid-template-columns: 30mm 1fr;
+ border: 1px solid var(--rule);
+ border-radius: 1px;
+ }
+
+ .ov-key {
+ font-size: 8.5pt;
+ font-weight: 500;
+ color: var(--mid);
+ background: var(--fill-empty);
+ padding: 2.5mm 3mm;
+ border-bottom: 1px solid var(--rule);
+ border-right: 1px solid var(--rule);
+ display: flex;
+ align-items: center;
+ letter-spacing: 0.03em;
+ white-space: nowrap;
+ }
+
+ .ov-key:last-of-type, .ov-val:last-child { border-bottom: none; }
+
+ .ov-val {
+ font-size: 9pt;
+ padding: 3mm 3.5mm;
+ border-bottom: 1px solid var(--rule);
+ display: flex;
+ align-items: center;
+ min-height: 11mm;
+ line-height: 1.5;
+ }
+
+ /* ══════════════════════════════════
+ 필드 값 공통
+ ══════════════════════════════════ */
+ .field-value {
+ display: inline-block;
+ min-width: 30mm;
+ width: 100%;
+ color: var(--black);
+ font-size: 9pt;
+ line-height: 1.6;
+ position: relative;
+ transition: background 0.3s;
+ }
+
+ .field-value.empty {
+ color: transparent;
+ border-bottom: 1px dashed var(--rule);
+ min-height: 5mm;
+ }
+
+ .field-value.empty::after {
+ content: attr(data-placeholder);
+ position: absolute;
+ left: 0;
+ top: 0;
+ color: var(--pale);
+ font-size: 7.5pt;
+ font-style: italic;
+ pointer-events: none;
+ white-space: nowrap;
+ }
+
+ .field-value.highlight {
+ animation: fillIn 0.5s ease forwards;
+ }
+
+ @keyframes fillIn {
+ 0% { background: #e0e0e0; }
+ 100% { background: transparent; }
+ }
+
+ /* ══════════════════════════════════
+ 나. 시행 사유 — 체크박스 목록
+ ══════════════════════════════════ */
+ .reason-list {
+ border: 1px solid var(--rule);
+ border-radius: 1px;
+ overflow: hidden;
+ }
+
+ .reason-item {
+ display: flex;
+ align-items: flex-start;
+ gap: 3mm;
+ padding: 2.5mm 3.5mm;
+ border-bottom: 1px solid var(--pale);
+ font-size: 8.5pt;
+ line-height: 1.55;
+ color: var(--dark);
+ transition: background 0.3s;
+ }
+
+ .reason-item:last-child { border-bottom: none; }
+
+ .reason-item.checked {
+ background: var(--fill-empty);
+ color: var(--black);
+ font-weight: 500;
+ }
+
+ .reason-check {
+ width: 4mm;
+ height: 4mm;
+ min-width: 4mm;
+ border: 1px solid var(--rule);
+ margin-top: 0.8mm;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 7pt;
+ color: var(--black);
+ background: white;
+ flex-shrink: 0;
+ }
+
+ .reason-item.checked .reason-check {
+ background: var(--dark);
+ border-color: var(--dark);
+ color: white;
+ }
+
+ /* ══════════════════════════════════
+ 다. 현장관리 계획 — 카드 그리드
+ ══════════════════════════════════ */
+ .mgmt-grid {
+ border: 1px solid var(--rule);
+ border-radius: 1px;
+ overflow: hidden;
+ }
+
+ .mgmt-row {
+ display: grid;
+ grid-template-columns: 32mm 1fr;
+ border-bottom: 1px solid var(--rule);
+ }
+
+ .mgmt-row:last-child { border-bottom: none; }
+
+ .mgmt-key {
+ font-size: 8pt;
+ font-weight: 500;
+ color: var(--mid);
+ background: var(--fill-empty);
+ padding: 3mm 3mm;
+ border-right: 1px solid var(--rule);
+ display: flex;
+ align-items: flex-start;
+ padding-top: 3.5mm;
+ letter-spacing: 0.02em;
+ line-height: 1.4;
+ }
+
+ .mgmt-val {
+ padding: 3mm 3.5mm;
+ min-height: 14mm;
+ display: flex;
+ align-items: flex-start;
+ }
+
+ .mgmt-val .field-value {
+ white-space: pre-line;
+ }
+
+ /* ══════════════════════════════════
+ 라. 비상시 대응체계
+ ══════════════════════════════════ */
+ .emergency-box {
+ border: 1px solid var(--rule);
+ border-radius: 1px;
+ padding: 3mm 4mm;
+ min-height: 22mm;
+ background: var(--white);
+ }
+
+ .emergency-box .field-value {
+ white-space: pre-line;
+ line-height: 1.7;
+ }
+
+ /* ══════════════════════════════════
+ 마. 건설사업단 의견
+ ══════════════════════════════════ */
+ .opinion-box {
+ border: 1px solid var(--rule);
+ border-radius: 1px;
+ min-height: 42mm;
+ padding: 3mm 4mm;
+ position: relative;
+ background: var(--white);
+ }
+
+ .opinion-box .field-value {
+ white-space: pre-line;
+ line-height: 1.7;
+ }
+
+ .opinion-badge {
+ position: absolute;
+ top: 2.5mm;
+ right: 3mm;
+ font-size: 7pt;
+ color: var(--light);
+ border: 1px solid var(--pale);
+ padding: 0.5mm 2mm;
+ border-radius: 2px;
+ letter-spacing: 0.05em;
+ }
+
+ /* ══════════════════════════════════
+ 구분선 장식
+ ══════════════════════════════════ */
+ .divider {
+ height: 1px;
+ background: linear-gradient(to right, var(--black) 20mm, var(--pale) 100%);
+ margin: 5mm 0;
+ }
+
+</style>
+</head>
+<body>
+
+<div class="a4-page" id="a4-doc">
+
+ <!-- 타이틀 -->
+ <div class="doc-header">
+ <h1 class="doc-title">일요일 공사 승인 요청서</h1>
+ <p class="doc-subtitle">Sunday Construction Approval Request</p>
+ </div>
+
+ <!-- ─────────────────────────── -->
+ <!-- 가. 공사 개요 -->
+ <!-- ─────────────────────────── -->
+ <div class="section">
+ <div class="section-label">
+ 가. 공사 개요
+ <span class="section-no">Project Overview</span>
+ </div>
+ <div class="overview-grid">
+ <div class="ov-key">공 사 명</div>
+ <div class="ov-val">
+ <span class="field-value" data-field="project_name" id="f-project_name">
+ 성산천 재해예방사업(1공구)
+ </span>
+ </div>
+
+ <div class="ov-key">공사예정일</div>
+ <div class="ov-val">
+ <span class="field-value empty" data-field="work_date" id="f-work_date"
+ data-placeholder="예: 2026. 06. 07 (일) 08:00 ~ 17:00"> </span>
+ </div>
+
+ <div class="ov-key">공종 및 위치</div>
+ <div class="ov-val">
+ <span class="field-value empty" data-field="location" id="f-location"
+ data-placeholder="예: 부대공 / 서천군 중천면 신검리 285-2"> </span>
+ </div>
+
+ <div class="ov-key">시 공 사</div>
+ <div class="ov-val">
+ <span class="field-value" data-field="contractor" id="f-contractor">
+ 석신건설 ㈜ (현장대리인 : 김재업, 010-3676-6766)
+ </span>
+ </div>
+
+ <div class="ov-key">건설사업관리단</div>
+ <div class="ov-val" style="border-bottom:none;">
+ <span class="field-value" data-field="supervision" id="f-supervision">
+ ㈜동명기술공단 (책임건설사업관리기술인 : 윤용주, 010-8863-3460)
+ </span>
+ </div>
+ </div>
+ </div>
+
+ <!-- ─────────────────────────── -->
+ <!-- 나. 일요일 공사 시행 사유 -->
+ <!-- ─────────────────────────── -->
+ <div class="section">
+ <div class="section-label">
+ 나. 일요일 공사 시행 사유
+ <span class="section-no">Reason for Sunday Work</span>
+ </div>
+
+ <div class="reason-list">
+ <div class="reason-item" id="reason_1">
+ <div class="reason-check" id="rc_1"></div>
+ <span>사고·재해의 복구 및 예방과 안전 확보를 위하여 긴급 보수·보강 공사가 필요한 경우</span>
+ </div>
+ <div class="reason-item" id="reason_2">
+ <div class="reason-check" id="rc_2"></div>
+ <span>날씨·기상조건에 따라 작업일수가 부족하여 추가 작업이 필요한 경우</span>
+ </div>
+ <div class="reason-item" id="reason_3">
+ <div class="reason-check" id="rc_3"></div>
+ <span>교통·환경 등의 문제로 평일 공사 시행이 어려운 경우</span>
+ </div>
+ <div class="reason-item" id="reason_4">
+ <div class="reason-check" id="rc_4"></div>
+ <span>공법·공사의 특성상 연속적인 시공이 필요한 경우</span>
+ </div>
+ <div class="reason-item" id="reason_5">
+ <div class="reason-check" id="rc_5"></div>
+ <span>민원·소송·보상 문제 등 건설사업자의 귀책사유가 아닌 외부요인으로 인하여 공정이 지연된 경우</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- ─────────────────────────── -->
+ <!-- 다. 현장관리 계획 -->
+ <!-- ─────────────────────────── -->
+ <div class="section">
+ <div class="section-label">
+ 다. 현장관리 계획
+ <span class="section-no">Site Management Plan</span>
+ </div>
+ <div class="mgmt-grid">
+ <div class="mgmt-row">
+ <div class="mgmt-key">주요 작업 내용</div>
+ <div class="mgmt-val">
+ <span class="field-value empty" data-field="main_work_content" id="f-main_work_content"
+ data-placeholder="예: 카고크레인 이용 가설사무실 인양·설치 및 고정상태 확인"> </span>
+ </div>
+ </div>
+ <div class="mgmt-row">
+ <div class="mgmt-key">안전 조치 계획</div>
+ <div class="mgmt-val">
+ <span class="field-value empty" data-field="safety_plan" id="f-safety_plan"
+ data-placeholder="예: 작업 전 TBM 실시, 인양 하부 출입금지, 줄걸이 상태 확인"> </span>
+ </div>
+ </div>
+ <div class="mgmt-row">
+ <div class="mgmt-key">작업 근로자수<br><small style="font-size:7pt;color:#aaa">(공종별)</small></div>
+ <div class="mgmt-val">
+ <span class="field-value empty" data-field="worker_count" id="f-worker_count"
+ data-placeholder="예: 총 4명 (작업자 3명, 신호수 1명)"> </span>
+ </div>
+ </div>
+ <div class="mgmt-row">
+ <div class="mgmt-key">작업 장비</div>
+ <div class="mgmt-val">
+ <span class="field-value empty" data-field="equipment" id="f-equipment"
+ data-placeholder="예: 카고크레인 1대, 슬링벨트·샤클·와이어로프 등"> </span>
+ </div>
+ </div>
+ <div class="mgmt-row" style="border-bottom:none;">
+ <div class="mgmt-key">일요일 공사<br>책임자</div>
+ <div class="mgmt-val">
+ <span class="field-value empty" data-field="site_manager" id="f-site_manager"
+ data-placeholder="예: 현장대리인 김재업, 010-3676-6766"> </span>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ─────────────────────────── -->
+ <!-- 라. 비상시 대응체계 -->
+ <!-- ─────────────────────────── -->
+ <div class="section">
+ <div class="section-label">
+ 라. 비상시 대응체계
+ <span class="section-no">Emergency Response</span>
+ </div>
+ <div class="emergency-box">
+ <span class="field-value empty" data-field="emergency_plan" id="f-emergency_plan"
+ data-placeholder="예: 사고 발생 시 즉시 작업중지 및 현장대리인에게 보고 / 응급환자 발생 시 119 신고 및 인근 병원 후송"> </span>
+ </div>
+ </div>
+
+ <!-- ─────────────────────────── -->
+ <!-- 마. 건설사업단 의견 -->
+ <!-- ─────────────────────────── -->
+ <div class="section">
+ <div class="section-label">
+ 마. 건설사업단 의견
+ <span class="section-no">Supervision Opinion</span>
+ </div>
+ <div class="opinion-box">
+ <span class="opinion-badge">감리단 입력 (AI 10번)</span>
+ <span class="field-value empty" data-field="supervisor_opinion" id="f-supervisor_opinion"
+ data-placeholder="감리단에서 최종 의견을 입력합니다."> </span>
+ </div>
+ </div>
+
+</div><!-- /.a4-page -->
+
+</body>
+</html>
