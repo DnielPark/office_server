@@ -273,30 +273,30 @@ PROJECTS = {
     "sungsan1": {
         "name": "성산1공구",
         "password": os.getenv("SUNGSAN1_PW"),
-        "site_name": "성산천 재해예방사업(1공구)",
-        "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "석신건설 ㈜ (현장대리인: 김재업, 010-3676-6766)"),
+        "site_name": "성산천 재해복구사업(1공구)",
+        "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "선식건설(주) (현장대리인: 김재엽, 010-3676-6766)"),
         "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
     },
     "sungsan2": {
         "name": "성산2공구",
         "password": os.getenv("SUNGSAN2_PW"),
-        "site_name": "성산천 재해예방사업(2공구)",
-        "contractor": os.getenv("SUNGSAN2_CONTRACTOR", ""),
-        "supervision": os.getenv("SUNGSAN2_SUPERVISION", ""),
+        "site_name": "성산천 재해복구사업(2공구)",
+        "contractor": os.getenv("SUNGSAN2_CONTRACTOR", "동우건설(주) (현장대리인: 이중구, 010-8817-0373)"),
+        "supervision": os.getenv("SUNGSAN2_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
     },
     "gudong1":  {
         "name": "구동1공구",
         "password": os.getenv("GUDONG1_PW"),
-        "site_name": "서천군 재해복구사업(구동지구 제1공구)",
-        "contractor": os.getenv("GUDONG1_CONTRACTOR", ""),
-        "supervision": os.getenv("GUDONG1_SUPERVISION", ""),
+        "site_name": "구동2리천 재해복구사업(1공구)",
+        "contractor": os.getenv("GUDONG1_CONTRACTOR", "서진산업(주) (현장대리인: 윤영근, 010-6356-3358)"),
+        "supervision": os.getenv("GUDONG1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
     },
     "gudong2":  {
         "name": "구동2공구",
         "password": os.getenv("GUDONG2_PW"),
-        "site_name": "서천군 재해복구사업(구동지구 제2공구)",
-        "contractor": os.getenv("GUDONG2_CONTRACTOR", ""),
-        "supervision": os.getenv("GUDONG2_SUPERVISION", ""),
+        "site_name": "구동2리천 재해복구사업(2공구)",
+        "contractor": os.getenv("GUDONG2_CONTRACTOR", "(주)조아건설 (현장대리인: 김현기, 010-5455-8972)"),
+        "supervision": os.getenv("GUDONG2_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
     },
 }
 
@@ -471,8 +471,8 @@ def doc_builder_sunday(project_key=None):
         }
     else:
         project_info = {
-            "name": "성산천 재해예방사업(1공구)",
-            "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "석신건설 ㈜ (현장대리인: 김재업, 010-3676-6766)"),
+            "name": "성산천 재해복구사업(1공구)",
+            "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "선식건설(주) (현장대리인: 김재엽, 010-3676-6766)"),
             "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
         }
     return render_template("doc_builder/sunday_chat.html", project_key=project_key or "devnote", project_info=project_info)
