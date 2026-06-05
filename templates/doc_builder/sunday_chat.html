@@ -5,11 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>일요일 공사 승인 요청서 — 문서 작성기</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    /* ── 전역 리셋 ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
+      --black: #111111;
+      --dark: #2a2a2a;
+      --mid: #555555;
+      --light: #888888;
+      --rule: #c0c0c0;
+      --pale: #e8e8e8;
       --bg: #0d1117;
+      --white: #ffffff;
+      --fill-empty: #f9f9f9;
       --surface: #161b22;
       --border: #30363d;
       --accent: #2f81f7;
@@ -17,10 +27,13 @@
       --text: #e6edf3;
       --muted: #8b949e;
       --success: #3fb950;
+
+      --serif: 'Noto Serif KR', 'Batang', serif;
+      --sans: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
     }
 
     body {
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: var(--sans);
       background: var(--bg);
       color: var(--text);
       height: 100vh;
@@ -30,169 +43,225 @@
     /* ── 상단 바 ── */
     .top-bar {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      align-items: center; gap: 12px;
       padding: 10px 20px;
       border-bottom: 1px solid var(--border);
       background: #0d1117;
-      flex-shrink: 0;
-      z-index: 10;
+      flex-shrink: 0; z-index: 10;
     }
     .top-bar .back-btn {
       font-size: 13px; color: var(--muted);
       background: none; border: none; cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: var(--sans);
       display: flex; align-items: center; gap: 4px;
       transition: color .15s;
     }
     .top-bar .back-btn:hover { color: var(--accent); }
     .top-bar .title { flex: 1; font-size: 14px; font-weight: 500; }
     .top-bar .title small { color: var(--muted); font-weight: 400; font-size: 12px; }
+
     #print-btn {
-      padding: 6px 16px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all .15s;
-      font-family: 'Noto Sans KR', sans-serif;
-      opacity: 0.4;
-      pointer-events: none;
+      padding: 6px 16px; border: 1px solid var(--border);
+      border-radius: 6px; background: transparent; color: var(--muted);
+      font-size: 12px; cursor: pointer;
+      transition: all .15s; font-family: var(--sans);
+      opacity: 0.4; pointer-events: none;
     }
     #print-btn.active {
-      color: var(--text);
-      border-color: var(--accent);
-      opacity: 1;
-      pointer-events: auto;
+      color: var(--text); border-color: var(--accent);
+      opacity: 1; pointer-events: auto;
     }
-    #print-btn.active:hover {
-      background: var(--accent);
-      color: #fff;
-    }
+    #print-btn.active:hover { background: var(--accent); color: #fff; }
 
     /* ── 메인 레이아웃 ── */
-    .main-layout {
-      display: flex;
-      height: calc(100vh - 50px);
-    }
+    .main-layout { display: flex; height: calc(100vh - 50px); }
 
-    /* ── 왼쪽: 문서 미리보기 ── */
+    /* ── 왼쪽: A4 미리보기 ── */
     .preview-panel {
-      width: 50%;
-      overflow-y: auto;
-      padding: 24px;
-      background: #0d1117;
-      border-right: 1px solid var(--border);
+      width: 50%; overflow-y: auto; padding: 24px 16px;
+      background: #0d1117; border-right: 1px solid var(--border);
     }
     .preview-panel::-webkit-scrollbar { width: 5px; }
     .preview-panel::-webkit-scrollbar-track { background: transparent; }
     .preview-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* A4 용지 */
+    /* ── A4 페이지 (인쇄용 템플릿) ── */
     .a4-page {
-      width: 210mm;
-      min-height: 297mm;
+      width: 210mm; min-height: 297mm;
       margin: 0 auto;
-      background: #fff;
-      color: #1a1a1a;
-      padding: 20mm 25mm;
+      background: var(--white); color: var(--black);
+      padding: 18mm 16mm 20mm 18mm;
       box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-      font-size: 11pt;
-      line-height: 1.6;
       position: relative;
     }
 
-    .a4-page h1 {
-      font-size: 18pt;
+    .a4-page .field-value {
+      display: inline-block;
+      min-width: 30mm; width: 100%;
+      color: var(--black);
+      font-size: 9pt; line-height: 1.6;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .a4-page .field-value.empty {
+      color: transparent;
+      border-bottom: 1px dashed var(--rule);
+      min-height: 5mm;
+    }
+    .a4-page .field-value.empty::after {
+      content: attr(data-placeholder);
+      position: absolute; left: 0; top: 0;
+      color: var(--pale);
+      font-size: 7.5pt; font-style: italic;
+      pointer-events: none; white-space: nowrap;
+    }
+    .a4-page .field-value.highlight {
+      animation: fillIn 0.5s ease forwards;
+    }
+    @keyframes fillIn {
+      0% { background: #e0e0e0; }
+      100% { background: transparent; }
+    }
+    .a4-page .field-value.done-highlight {
+      animation: fillInGreen 0.5s ease forwards;
+    }
+    @keyframes fillInGreen {
+      0% { background: #c8e6c9; }
+      100% { background: transparent; }
+    }
+
+    .doc-header {
       text-align: center;
-      margin-bottom: 20pt;
-      font-weight: 700;
+      padding-bottom: 10mm;
+      border-bottom: 2.5px solid var(--black);
+      margin-bottom: 7mm;
+    }
+    .doc-header::before {
+      content: '';
+      display: block; width: 28mm; height: 2px;
+      background: var(--black);
+      margin: 0 auto 4mm;
+    }
+    .doc-title {
+      font-family: var(--serif); font-size: 22pt;
+      font-weight: 700; letter-spacing: 0.15em;
+      color: var(--black); line-height: 1.2;
+    }
+    .doc-subtitle {
+      font-size: 8pt; color: var(--light);
+      letter-spacing: 0.3em; margin-top: 2mm;
+      text-transform: uppercase; font-weight: 300;
+    }
+
+    .section { margin-bottom: 5.5mm; }
+    .section-label {
+      font-family: var(--serif); font-size: 9.5pt;
+      font-weight: 600; color: var(--dark);
+      letter-spacing: 0.08em;
+      padding: 1.5mm 3mm 1.5mm 2.5mm;
+      border-left: 3px solid var(--black);
+      background: var(--pale);
+      margin-bottom: 3mm;
+      display: flex; align-items: center; gap: 2mm;
+    }
+    .section-label .section-no {
+      font-size: 7.5pt; color: var(--light);
+      font-family: var(--sans); font-weight: 400;
       letter-spacing: 0.05em;
     }
-    .a4-page .doc-number {
-      text-align: right;
-      font-size: 9pt;
-      color: #666;
-      margin-bottom: 12pt;
+
+    .overview-grid {
+      display: grid; grid-template-columns: 30mm 1fr;
+      border: 1px solid var(--rule); border-radius: 1px;
     }
-    .a4-page table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 8pt;
+    .ov-key {
+      font-size: 8.5pt; font-weight: 500; color: var(--mid);
+      background: var(--fill-empty);
+      padding: 2.5mm 3mm;
+      border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule);
+      display: flex; align-items: center;
+      letter-spacing: 0.03em; white-space: nowrap;
     }
-    .a4-page table th,
-    .a4-page table td {
-      border: 1px solid #333;
-      padding: 6pt 10pt;
-      text-align: left;
-      font-size: 10pt;
-      vertical-align: top;
-    }
-    .a4-page table th {
-      background: #f0f4f8;
-      font-weight: 600;
-      width: 28%;
-      white-space: nowrap;
-    }
-    .a4-page table td {
-      width: 72%;
+    .ov-key:last-of-type, .ov-val:last-child { border-bottom: none; }
+    .ov-val {
+      font-size: 9pt; padding: 3mm 3.5mm;
+      border-bottom: 1px solid var(--rule);
+      display: flex; align-items: center;
+      min-height: 11mm; line-height: 1.5;
     }
 
-    .field-value {
-      min-height: 18pt;
-      transition: background .4s, color .4s;
-      padding: 1px 4px;
-      border-radius: 2px;
+    .reason-list {
+      border: 1px solid var(--rule); border-radius: 1px; overflow: hidden;
     }
-    .field-value.empty {
-      color: #999;
-      border-bottom: 1px dashed #bbb;
+    .reason-item {
+      display: flex; align-items: flex-start; gap: 3mm;
+      padding: 2.5mm 3.5mm;
+      border-bottom: 1px solid var(--pale);
+      font-size: 8.5pt; line-height: 1.55;
+      color: var(--dark); transition: background 0.3s;
     }
-    .field-value.filled {
-      color: #1a1a1a;
+    .reason-item:last-child { border-bottom: none; }
+    .reason-item.checked {
+      background: var(--fill-empty); color: var(--black); font-weight: 500;
     }
-    .field-value.highlight {
-      background: #fff3cd;
-      transition: background 0s;
+    .reason-check {
+      width: 4mm; height: 4mm; min-width: 4mm;
+      border: 1px solid var(--rule); margin-top: 0.8mm;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7pt; color: var(--black); background: white; flex-shrink: 0;
     }
-    .field-value.done-highlight {
-      background: #d4edda;
-      transition: background 0s;
+    .reason-item.checked .reason-check {
+      background: var(--dark); border-color: var(--dark); color: white;
     }
 
-    .status-badge {
-      display: inline-block;
-      font-size: 7pt;
-      padding: 1px 6px;
-      border-radius: 3px;
-      margin-left: 4px;
+    .mgmt-grid {
+      border: 1px solid var(--rule); border-radius: 1px; overflow: hidden;
     }
-    .status-badge.pending { background: #fff3cd; color: #856404; }
-    .status-badge.done { background: #d4edda; color: #155724; }
+    .mgmt-row {
+      display: grid; grid-template-columns: 32mm 1fr;
+      border-bottom: 1px solid var(--rule);
+    }
+    .mgmt-row:last-child { border-bottom: none; }
+    .mgmt-key {
+      font-size: 8pt; font-weight: 500; color: var(--mid);
+      background: var(--fill-empty);
+      padding: 3mm 3mm; border-right: 1px solid var(--rule);
+      display: flex; align-items: flex-start;
+      padding-top: 3.5mm; letter-spacing: 0.02em; line-height: 1.4;
+    }
+    .mgmt-val {
+      padding: 3mm 3.5mm; min-height: 14mm;
+      display: flex; align-items: flex-start;
+    }
+    .mgmt-val .field-value { white-space: pre-line; }
 
-    .a4-footer {
-      text-align: center;
-      font-size: 8pt;
-      color: #999;
-      margin-top: 24pt;
-      padding-top: 12pt;
-      border-top: 1px solid #ddd;
+    .emergency-box {
+      border: 1px solid var(--rule); border-radius: 1px;
+      padding: 3mm 4mm; min-height: 22mm; background: var(--white);
+    }
+    .emergency-box .field-value { white-space: pre-line; line-height: 1.7; }
+
+    .opinion-box {
+      border: 1px solid var(--rule); border-radius: 1px;
+      min-height: 42mm; padding: 3mm 4mm;
+      position: relative; background: var(--white);
+    }
+    .opinion-box .field-value { white-space: pre-line; line-height: 1.7; }
+    .opinion-badge {
+      position: absolute; top: 2.5mm; right: 3mm;
+      font-size: 7pt; color: var(--light);
+      border: 1px solid var(--pale);
+      padding: 0.5mm 2mm; border-radius: 2px; letter-spacing: 0.05em;
     }
 
     /* ── 오른쪽: 채팅 패널 ── */
     .chat-panel {
-      width: 50%;
-      display: flex;
-      flex-direction: column;
+      width: 50%; display: flex; flex-direction: column;
       background: var(--surface);
     }
     .chat-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      background: #1c2333;
-      flex-shrink: 0;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      background: #1c2333; flex-shrink: 0;
     }
     .chat-header .ai-name {
       font-size: 13px; font-weight: 600;
@@ -207,12 +276,9 @@
     }
 
     .chat-messages {
-      flex: 1;
-      overflow-y: auto;
+      flex: 1; overflow-y: auto;
       padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: flex; flex-direction: column; gap: 10px;
       scroll-behavior: smooth;
     }
     .chat-messages::-webkit-scrollbar { width: 5px; }
@@ -220,13 +286,9 @@
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .msg {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      max-width: 85%; padding: 10px 14px;
+      border-radius: 12px; font-size: 13px;
+      line-height: 1.55; white-space: pre-wrap; word-wrap: break-word;
       animation: msgIn .25s ease-out;
     }
     @keyframes msgIn {
@@ -234,40 +296,29 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .msg.bot {
-      align-self: flex-start;
-      background: #1c2333;
-      border: 1px solid var(--border);
-      color: var(--text);
+      align-self: flex-start; background: #1c2333;
+      border: 1px solid var(--border); color: var(--text);
       border-radius: 12px 12px 12px 4px;
     }
     .msg.user {
-      align-self: flex-end;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 12px 12px 4px 12px;
+      align-self: flex-end; background: var(--accent);
+      color: #fff; border-radius: 12px 12px 4px 12px;
     }
     .msg.system {
-      align-self: center;
-      background: transparent;
-      color: var(--muted);
-      font-size: 11px;
-      text-align: center;
-      border: none;
-      padding: 4px 8px;
+      align-self: center; background: transparent;
+      color: var(--muted); font-size: 11px; text-align: center;
+      border: none; padding: 4px 8px;
     }
 
     .typing {
-      align-self: flex-start;
-      display: flex; gap: 4px;
-      padding: 12px 16px;
-      background: #1c2333;
+      align-self: flex-start; display: flex; gap: 4px;
+      padding: 12px 16px; background: #1c2333;
       border: 1px solid var(--border);
       border-radius: 12px 12px 12px 4px;
     }
     .typing span {
       width: 6px; height: 6px; border-radius: 50%;
-      background: var(--muted);
-      animation: dotBounce 1.2s infinite;
+      background: var(--muted); animation: dotBounce 1.2s infinite;
     }
     .typing span:nth-child(2) { animation-delay: .2s; }
     .typing span:nth-child(3) { animation-delay: .4s; }
@@ -277,74 +328,47 @@
     }
 
     .chat-input-area {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; gap: 8px;
+      padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
     }
     .chat-input-area input {
-      flex: 1;
-      padding: 9px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #0d1117;
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      font-family: 'Noto Sans KR', sans-serif;
-      transition: border-color .15s;
+      flex: 1; padding: 9px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: #0d1117;
+      color: var(--text); font-size: 13px; outline: none;
+      font-family: var(--sans); transition: border-color .15s;
     }
     .chat-input-area input:focus { border-color: var(--accent); }
     .chat-input-area input::placeholder { color: #484f58; }
-    .chat-input-area .btn-group {
-      display: flex; gap: 6px; flex-shrink: 0;
-    }
+    .chat-input-area .btn-group { display: flex; gap: 6px; flex-shrink: 0; }
     .chat-input-area button {
       width: 38px; height: 38px;
-      border-radius: 8px; border: none;
-      cursor: pointer;
+      border-radius: 8px; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-      transition: background .15s;
+      font-size: 16px; transition: background .15s;
     }
-    .chat-input-area #send-btn {
-      background: var(--accent);
-      color: #fff;
-    }
-    .chat-input-area #send-btn:hover { background: var(--accent2); }
-    .chat-input-area #send-btn:disabled { opacity: 0.5; cursor: default; }
-    .chat-input-area #attach-btn {
-      background: transparent;
-      color: var(--muted);
+    #send-btn { background: var(--accent); color: #fff; }
+    #send-btn:hover { background: var(--accent2); }
+    #send-btn:disabled { opacity: 0.5; cursor: default; }
+    #attach-btn {
+      background: transparent; color: var(--muted);
       border: 1px solid var(--border);
     }
-    .chat-input-area #attach-btn:hover { color: var(--text); border-color: var(--muted); }
+    #attach-btn:hover { color: var(--text); border-color: var(--muted); }
 
-    /* ── 미디어 출력 ── */
+    /* ── 인쇄 ── */
     @media print {
-      body { background: #fff; overflow: visible; }
+      body { background: white; overflow: visible; }
       .top-bar { display: none; }
       .chat-panel { display: none; }
-      .preview-panel {
-        width: 100%;
-        border: none;
-        padding: 0;
-        overflow: visible;
-      }
+      .preview-panel { width: 100%; border: none; padding: 0; overflow: visible; }
       .a4-page {
-        box-shadow: none;
-        margin: 0;
-        padding: 15mm 20mm;
+        box-shadow: none; margin: 0;
+        padding: 15mm 14mm 18mm 16mm;
       }
-      .field-value.highlight,
-      .field-value.done-highlight {
-        background: transparent !important;
-      }
-      @page {
-        size: A4;
-        margin: 0;
-      }
+      .field-value.empty::after { display: none; }
+      .field-value.empty { border-bottom-color: #999; }
+      .field-value.highlight, .field-value.done-highlight { background: transparent !important; }
+      @page { size: A4; margin: 0; }
     }
   </style>
 </head>
@@ -362,92 +386,136 @@
 
   <!-- 메인 레이아웃 -->
   <div class="main-layout">
-    <!-- 왼쪽: A4 미리보기 -->
-    <div class="preview-panel" id="preview-panel">
-      <div class="a4-page" id="a4-page">
 
-        <!-- 헤더 영역 -->
-        <div class="doc-number">문서번호: <span id="doc-number">성산-승인-________</span></div>
-        <h1>일요일 공사 승인 요청서</h1>
+    <!-- ── 왼쪽: A4 미리보기 ── -->
+    <div class="preview-panel">
+      <div class="a4-page" id="a4-doc">
 
-        <table>
-          <tr>
-            <th>공사 예정일</th>
-            <td><span class="field-value empty" data-field="work_date" data-placeholder="예: 2026-06-07">____________</span></td>
-          </tr>
-          <tr>
-            <th>작업 시간</th>
-            <td><span class="field-value empty" data-field="work_time" data-placeholder="예: 09:00 ~ 18:00">____________</span></td>
-          </tr>
-          <tr>
-            <th>공사 위치</th>
-            <td><span class="field-value empty" data-field="location" data-placeholder="예: 성산천 제1공구 2.5km 지점">____________</span></td>
-          </tr>
-          <tr>
-            <th>일요일 작업 사유</th>
-            <td><span class="field-value empty" data-field="work_reason" data-placeholder="사유 선택">____________</span></td>
-          </tr>
-          <tr>
-            <th>주요 작업 내용</th>
-            <td><span class="field-value empty" data-field="main_work_content" data-placeholder="예: 토사 반출 및 호안 블록 설치">____________</span></td>
-          </tr>
-          <tr>
-            <th>안전 관리 계획</th>
-            <td><span class="field-value empty" data-field="safety_plan" data-placeholder="예: 안전 관리자 배치, 작업 전 안전 교육">____________</span></td>
-          </tr>
-          <tr>
-            <th>투입 인원</th>
-            <td><span class="field-value empty" data-field="worker_count" data-placeholder="예: 8명">____________</span></td>
-          </tr>
-          <tr>
-            <th>투입 장비</th>
-            <td><span class="field-value empty" data-field="equipment" data-placeholder="예: 굴삭기 2대, 덤프트럭 5대">____________</span></td>
-          </tr>
-          <tr>
-            <th>현장 책임자</th>
-            <td><span class="field-value empty" data-field="site_manager" data-placeholder="예: 홍길동 (010-1234-5678)">____________</span></td>
-          </tr>
-          <tr>
-            <th>비상 연락망 / 대처 계획</th>
-            <td><span class="field-value empty" data-field="emergency_plan" data-placeholder="예: 비상 연락처, 인근 병원, 화재 대비">____________</span></td>
-          </tr>
-          <!-- 서명란 -->
-          <tr>
-            <th>신청인</th>
-            <td><span class="field-value empty" data-field="applicant" data-placeholder="성명">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
-          </tr>
-          <tr>
-            <th>현장 소장 확인</th>
-            <td><span style="color:#999; font-size:9pt;">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
-          </tr>
-          <tr>
-            <th>안전 관리자 확인</th>
-            <td><span style="color:#999; font-size:9pt;">____________</span><span style="float:right; color:#999; font-size:9pt;">(인)</span></td>
-          </tr>
-        </table>
-
-        <div style="margin-top: 12pt;">
-          <p style="font-size: 9pt; color: #666;">
-            본인은 상기와 같이 일요일(공휴일) 공사를 수행하고자 하오며,<br>
-            작업 중 안전 관리 및 사고 예방에 만전을 기할 것을 서약합니다.
-          </p>
+        <!-- 타이틀 -->
+        <div class="doc-header">
+          <h1 class="doc-title">일요일 공사 승인 요청서</h1>
+          <p class="doc-subtitle">Sunday Construction Approval Request</p>
         </div>
 
-        <div class="a4-footer">
-          <span id="footer-date">20____년 ____월 ____일</span><br>
-          <strong>성산천 사업관리단 귀중</strong>
+        <!-- 가. 공사 개요 -->
+        <div class="section">
+          <div class="section-label">가. 공사 개요 <span class="section-no">Project Overview</span></div>
+          <div class="overview-grid">
+            <div class="ov-key">공 사 명</div>
+            <div class="ov-val">
+              <span class="field-value" data-field="project_name">{{ project_info.name }}</span>
+            </div>
+            <div class="ov-key">공사예정일</div>
+            <div class="ov-val">
+              <span class="field-value empty" data-field="work_date" data-placeholder="예: 2026. 06. 07 (일) 08:00 ~ 17:00"> </span>
+            </div>
+            <div class="ov-key">공종 및 위치</div>
+            <div class="ov-val">
+              <span class="field-value empty" data-field="location" data-placeholder="예: 부대공 / 서천군 중천면 신검리 285-2"> </span>
+            </div>
+            <div class="ov-key">시 공 사</div>
+            <div class="ov-val">
+              <span class="field-value" data-field="contractor">{{ project_info.contractor }}</span>
+            </div>
+            <div class="ov-key">건설사업관리단</div>
+            <div class="ov-val" style="border-bottom:none;">
+              <span class="field-value" data-field="supervision">{{ project_info.supervision }}</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 오른쪽: 채팅 패널 -->
+        <!-- 나. 일요일 공사 시행 사유 -->
+        <div class="section">
+          <div class="section-label">나. 일요일 공사 시행 사유 <span class="section-no">Reason for Sunday Work</span></div>
+          <div class="reason-list">
+            <div class="reason-item" id="reason_1">
+              <div class="reason-check" id="rc_1"></div>
+              <span>사고·재해의 복구 및 예방과 안전 확보를 위하여 긴급 보수·보강 공사가 필요한 경우</span>
+            </div>
+            <div class="reason-item" id="reason_2">
+              <div class="reason-check" id="rc_2"></div>
+              <span>날씨·기상조건에 따라 작업일수가 부족하여 추가 작업이 필요한 경우</span>
+            </div>
+            <div class="reason-item" id="reason_3">
+              <div class="reason-check" id="rc_3"></div>
+              <span>교통·환경 등의 문제로 평일 공사 시행이 어려운 경우</span>
+            </div>
+            <div class="reason-item" id="reason_4">
+              <div class="reason-check" id="rc_4"></div>
+              <span>공법·공사의 특성상 연속적인 시공이 필요한 경우</span>
+            </div>
+            <div class="reason-item" id="reason_5">
+              <div class="reason-check" id="rc_5"></div>
+              <span>민원·소송·보상 문제 등 건설사업자의 귀책사유가 아닌 외부요인으로 인하여 공정이 지연된 경우</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 다. 현장관리 계획 -->
+        <div class="section">
+          <div class="section-label">다. 현장관리 계획 <span class="section-no">Site Management Plan</span></div>
+          <div class="mgmt-grid">
+            <div class="mgmt-row">
+              <div class="mgmt-key">주요 작업 내용</div>
+              <div class="mgmt-val">
+                <span class="field-value empty" data-field="main_work_content" data-placeholder="예: 카고크레인 이용 가설사무실 인양·설치 및 고정상태 확인"> </span>
+              </div>
+            </div>
+            <div class="mgmt-row">
+              <div class="mgmt-key">안전 조치 계획</div>
+              <div class="mgmt-val">
+                <span class="field-value empty" data-field="safety_plan" data-placeholder="예: 작업 전 TBM 실시, 인양 하부 출입금지, 줄걸이 상태 확인"> </span>
+              </div>
+            </div>
+            <div class="mgmt-row">
+              <div class="mgmt-key">작업 근로자수<br><small style="font-size:7pt;color:#aaa">(공종별)</small></div>
+              <div class="mgmt-val">
+                <span class="field-value empty" data-field="worker_count" data-placeholder="예: 총 4명 (작업자 3명, 신호수 1명)"> </span>
+              </div>
+            </div>
+            <div class="mgmt-row">
+              <div class="mgmt-key">작업 장비</div>
+              <div class="mgmt-val">
+                <span class="field-value empty" data-field="equipment" data-placeholder="예: 카고크레인 1대, 슬링벨트·샤클·와이어로프 등"> </span>
+              </div>
+            </div>
+            <div class="mgmt-row" style="border-bottom:none;">
+              <div class="mgmt-key">일요일 공사<br>책임자</div>
+              <div class="mgmt-val">
+                <span class="field-value empty" data-field="site_manager" data-placeholder="예: 현장대리인 김재업, 010-3676-6766"> </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 라. 비상시 대응체계 -->
+        <div class="section">
+          <div class="section-label">라. 비상시 대응체계 <span class="section-no">Emergency Response</span></div>
+          <div class="emergency-box">
+            <span class="field-value empty" data-field="emergency_plan" data-placeholder="예: 사고 발생 시 즉시 작업중지 및 현장대리인 보고 / 응급환자 발생 시 119 신고 및 인근 병원 후송"> </span>
+          </div>
+        </div>
+
+        <!-- 마. 건설사업단 의견 -->
+        <div class="section">
+          <div class="section-label">마. 건설사업단 의견 <span class="section-no">Supervision Opinion</span></div>
+          <div class="opinion-box">
+            <span class="opinion-badge">감리단 입력</span>
+            <span class="field-value empty" data-field="supervisor_opinion" data-placeholder="감리단에서 최종 의견을 입력합니다."> </span>
+          </div>
+        </div>
+
+      </div><!-- /.a4-page -->
+    </div><!-- /.preview-panel -->
+
+    <!-- ── 오른쪽: 채팅 패널 ── -->
     <div class="chat-panel">
       <div class="chat-header">
         <div class="ai-name">
           <span class="dot"></span>
           AI 문서 도우미
         </div>
-        <div class="ai-desc">일요일 공사 승인 요청서 작성 (Phase 2 · Beta)</div>
+        <div class="ai-desc">일요일 공사 승인 요청서 작성 (Phase 2-v2)</div>
       </div>
 
       <div class="chat-messages" id="chat-messages"></div>
@@ -460,34 +528,33 @@
         </div>
       </div>
     </div>
+
   </div>
 
   <script>
   (function() {
     'use strict';
 
-    /* ── 상태 ── */
     var API_URL = '/devnote/doc-builder/sunday/chat';
-    var fields = {};
-    var completedFields = {};
     var requiredFields = [
-      'work_date', 'work_time', 'location', 'work_reason',
+      'work_date', 'location', 'work_reason',
       'main_work_content', 'safety_plan', 'worker_count',
-      'equipment', 'site_manager', 'emergency_plan'
+      'equipment', 'site_manager', 'emergency_plan', 'supervisor_opinion'
     ];
+    var autoFields = ['project_name', 'contractor', 'supervision'];
     var messages = [];
+    var completedFields = {};
 
-    /* ── DOM ── */
     var chatEl = document.getElementById('chat-messages');
     var inputEl = document.getElementById('chat-input');
     var sendBtn = document.getElementById('send-btn');
     var printBtn = document.getElementById('print-btn');
     var progressText = document.getElementById('progress-text');
 
-    /* ── 유틸 ── */
-    function scrollChat() {
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
+    // 자동입력 필드는 처음부터 완료
+    autoFields.forEach(function(k) { completedFields[k] = true; });
+
+    function scrollChat() { chatEl.scrollTop = chatEl.scrollHeight; }
 
     function addMessage(text, role) {
       var div = document.createElement('div');
@@ -499,8 +566,7 @@
 
     function showTyping() {
       var div = document.createElement('div');
-      div.className = 'typing';
-      div.id = 'typing-indicator';
+      div.className = 'typing'; div.id = 'typing-indicator';
       div.innerHTML = '<span></span><span></span><span></span>';
       chatEl.appendChild(div);
       scrollChat();
@@ -512,37 +578,50 @@
     }
 
     function updateProgress() {
-      var done = Object.keys(completedFields).length;
+      var done = 0;
+      requiredFields.forEach(function(f) {
+        if (completedFields[f]) done++;
+      });
       progressText.textContent = done + '/' + requiredFields.length + ' 항목';
       if (done >= requiredFields.length) {
         printBtn.classList.add('active');
+        printBtn.textContent = '🖨 PDF 출력';
+      } else {
+        printBtn.classList.remove('active');
         printBtn.textContent = '🖨 PDF 출력';
       }
     }
 
     function setField(fieldKey, value) {
+      // work_reason 특별 처리
+      if (fieldKey === 'work_reason' && Array.isArray(value)) {
+        value.forEach(function(reasonId) {
+          var item = document.getElementById(reasonId);
+          var check = document.getElementById('rc_' + reasonId.replace('reason_', ''));
+          if (item) item.classList.add('checked');
+          if (check) check.textContent = '✓';
+        });
+        completedFields['work_reason'] = true;
+        updateProgress();
+        return;
+      }
+
+      // 일반 필드
       var el = document.querySelector('[data-field="' + fieldKey + '"]');
       if (!el) return;
-
       var val = String(value || '');
       if (!val) return;
 
       el.textContent = val;
       el.classList.remove('empty');
-
-      // 하이라이트 애니메이션
       el.classList.remove('highlight', 'done-highlight');
-      void el.offsetWidth; // 리플로우 강제
+      void el.offsetWidth;
       if (completedFields[fieldKey]) {
         el.classList.add('done-highlight');
       } else {
         el.classList.add('highlight');
       }
-      setTimeout(function() {
-        el.classList.remove('highlight');
-      }, 1500);
-
-      // 완료 상태 업데이트
+      setTimeout(function() { el.classList.remove('highlight'); }, 1500);
       completedFields[fieldKey] = true;
       updateProgress();
     }
@@ -551,22 +630,16 @@
       if (!newFields) return;
       Object.keys(newFields).forEach(function(key) {
         if (newFields[key] !== null && newFields[key] !== undefined && newFields[key] !== '') {
-          var val = newFields[key];
-          if (Array.isArray(val)) {
-            val = val.join(', ');
-          }
-          setField(key, val);
+          setField(key, newFields[key]);
         }
       });
     }
 
-    /* ── API 호출 ── */
     function sendMessage(text) {
       if (!text.trim()) return;
       inputEl.value = '';
       addMessage(text, 'user');
 
-      // 현재 필드 상태 수집
       var currentFields = {};
       requiredFields.forEach(function(key) {
         var el = document.querySelector('[data-field="' + key + '"]');
@@ -591,19 +664,16 @@
         inputEl.disabled = false;
         sendBtn.disabled = false;
         inputEl.focus();
-
         if (xhr.status === 200) {
           try {
             var data = JSON.parse(xhr.responseText);
             messages.push({ role: 'assistant', content: data.reply });
             addMessage(data.reply, 'bot');
-            if (data.fields) {
-              applyFields(data.fields);
-            }
+            if (data.fields) applyFields(data.fields);
             if (data.next_question === null) {
-              addMessage('✅ 모든 항목이 작성되었습니다. 상단의 "PDF 출력" 버튼을 눌러 출력하세요.', 'system');
+              addMessage('✅ 모든 항목이 작성되었습니다! 상단의 "PDF 출력" 버튼을 눌러 출력하세요.', 'system');
             }
-          } catch (e) {
+          } catch(e) {
             addMessage('응답 처리 중 오류가 발생했습니다.', 'bot');
           }
         } else {
@@ -616,64 +686,19 @@
         sendBtn.disabled = false;
         addMessage('네트워크 오류가 발생했습니다.', 'bot');
       };
-      xhr.send(JSON.stringify({
-        messages: messages,
-        current_fields: currentFields
-      }));
+      xhr.send(JSON.stringify({ messages: messages, current_fields: currentFields }));
     }
 
-    /* ── 이벤트 ── */
-    sendBtn.addEventListener('click', function() {
-      sendMessage(inputEl.value);
-    });
+    sendBtn.addEventListener('click', function() { sendMessage(inputEl.value); });
     inputEl.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage(inputEl.value);
-      }
+      if (e.key === 'Enter') { e.preventDefault(); sendMessage(inputEl.value); }
     });
 
-    /* ── 초기화: AI 첫 메시지 ── */
-    function init() {
-      showTyping();
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', API_URL, true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.onload = function() {
-        hideTyping();
-        if (xhr.status === 200) {
-          try {
-            var data = JSON.parse(xhr.responseText);
-            messages.push({ role: 'assistant', content: data.reply });
-            addMessage(data.reply, 'bot');
-            if (data.fields) {
-              applyFields(data.fields);
-            }
-          } catch (e) {
-            addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
-            messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
-          }
-        } else {
-          addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
-          messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
-        }
-        inputEl.focus();
-      };
-      xhr.onerror = function() {
-        hideTyping();
-        addMessage('안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.', 'bot');
-        messages.push({ role: 'assistant', content: '안녕하세요! 일요일 공사 승인 요청서를 작성하겠습니다. 공사 예정일과 작업 시간을 알려주세요.' });
-        inputEl.focus();
-      };
-      xhr.send(JSON.stringify({
-        messages: [],
-        current_fields: {},
-        first_message: true
-      }));
-      updateProgress();
-    }
-
-    init();
+    // 초기화
+    updateProgress();
+    addMessage('안녕하세요! 📋 일요일 공사 승인 요청서 작성을 시작하겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**을 알려주세요.', 'bot');
+    messages.push({ role: 'assistant', content: '안녕하세요! 📋 일요일 공사 승인 요청서 작성을 시작하겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**을 알려주세요.' });
+    inputEl.focus();
   })();
   </script>
 </body>

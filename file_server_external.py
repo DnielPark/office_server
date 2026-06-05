@@ -270,10 +270,34 @@ def get_token_from_request():
 
 # ── 공구 설정 ─────────────────────────────────
 PROJECTS = {
-    "sungsan1": {"name": "성산1공구", "password": os.getenv("SUNGSAN1_PW")},
-    "sungsan2": {"name": "성산2공구", "password": os.getenv("SUNGSAN2_PW")},
-    "gudong1":  {"name": "구동1공구", "password": os.getenv("GUDONG1_PW")},
-    "gudong2":  {"name": "구동2공구", "password": os.getenv("GUDONG2_PW")},
+    "sungsan1": {
+        "name": "성산1공구",
+        "password": os.getenv("SUNGSAN1_PW"),
+        "site_name": "성산천 재해예방사업(1공구)",
+        "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "석신건설 ㈜ (현장대리인: 김재업, 010-3676-6766)"),
+        "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
+    },
+    "sungsan2": {
+        "name": "성산2공구",
+        "password": os.getenv("SUNGSAN2_PW"),
+        "site_name": "성산천 재해예방사업(2공구)",
+        "contractor": os.getenv("SUNGSAN2_CONTRACTOR", ""),
+        "supervision": os.getenv("SUNGSAN2_SUPERVISION", ""),
+    },
+    "gudong1":  {
+        "name": "구동1공구",
+        "password": os.getenv("GUDONG1_PW"),
+        "site_name": "서천군 재해복구사업(구동지구 제1공구)",
+        "contractor": os.getenv("GUDONG1_CONTRACTOR", ""),
+        "supervision": os.getenv("GUDONG1_SUPERVISION", ""),
+    },
+    "gudong2":  {
+        "name": "구동2공구",
+        "password": os.getenv("GUDONG2_PW"),
+        "site_name": "서천군 재해복구사업(구동지구 제2공구)",
+        "contractor": os.getenv("GUDONG2_CONTRACTOR", ""),
+        "supervision": os.getenv("GUDONG2_SUPERVISION", ""),
+    },
 }
 
 # ─────────────────────────────────────────────
@@ -436,35 +460,58 @@ def doc_builder_index():
 
 
 @app.route("/devnote/doc-builder/sunday")
-def doc_builder_sunday():
-    return render_template("doc_builder/sunday_chat.html")
+@app.route("/files/<project_key>/doc-builder/sunday")
+def doc_builder_sunday(project_key=None):
+    if project_key and project_key in PROJECTS:
+        info = PROJECTS[project_key]
+        project_info = {
+            "name": info["site_name"],
+            "contractor": info["contractor"],
+            "supervision": info["supervision"],
+        }
+    else:
+        project_info = {
+            "name": "성산천 재해예방사업(1공구)",
+            "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "석신건설 ㈜ (현장대리인: 김재업, 010-3676-6766)"),
+            "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
+        }
+    return render_template("doc_builder/sunday_chat.html", project_key=project_key or "devnote", project_info=project_info)
 
 
 @app.route("/devnote/doc-builder/sunday/chat", methods=["POST"])
-def doc_builder_sunday_chat():
-    """일요일 공사 승인 요청서 채팅 API (Phase 2-fix: DeepSeek V3)"""
+@app.route("/files/<project_key>/doc-builder/sunday/chat", methods=["POST"])
+def doc_builder_sunday_chat(project_key=None):
+    """일요일 공사 승인 요청서 채팅 API (Phase 2-v2: DeepSeek V3)"""
     data = request.get_json(force=True)
     messages = data.get("messages", [])
 
     SUNDAY_CHAT_SYSTEM = (
         "당신은 건설 현장 문서 작성 보조 AI입니다.\n"
-        "사용자와 대화하며 일요일 공사 승인 요청서의 필드를 하나씩 채워나갑니다.\n"
-        "응답은 반드시 JSON으로만 반환합니다:\n"
+        "사용자와 대화하며 일요일 공사 승인 요청서를 작성합니다.\n\n"
+        "[자동입력 항목 - 절대 질문하지 말 것]\n"
+        "- project_name, contractor, supervision\n\n"
+        "[대화 순서]\n"
+        "1. work_date (공사예정일 + 시간)\n"
+        "2. location (공종 및 위치)\n"
+        "3. 작업 내용을 자유롭게 물어본 뒤, 아래 5개 사유 중 해당하는 것 2~3개를 추천:\n"
+        "  reason_1: 긴급 보수·보강\n"
+        "  reason_2: 날씨·기상조건으로 공기 부족\n"
+        "  reason_3: 교통·환경 문제\n"
+        "  reason_4: 연속 시공 필요\n"
+        "  reason_5: 외부요인 공정 지연\n"
+        "  → 사용자가 확인하면 work_reason 배열로 반환\n"
+        "4. main_work_content\n"
+        "5. safety_plan\n"
+        "6. worker_count\n"
+        "7. equipment\n"
+        "8. site_manager\n"
+        "9. emergency_plan (기본값 제시: 사고 발생 시 즉시 작업중지 및 현장대리인 보고 / 응급환자 발생 시 119 신고 및 인근 병원 후송)\n"
+        "10. supervisor_opinion\n\n"
+        "응답 JSON 형식:\n"
         "{\n"
-        '  "reply": "사용자에게 보여줄 자연어 메시지",\n'
-        '  "fields": {\n'
-        '    "work_date": null 또는 "채워진 값",\n'
-        '    "work_time": null 또는 "채워진 값",\n'
-        '    "location": null 또는 "채워진 값",\n'
-        '    "work_reason": null 또는 ["reason_2"],\n'
-        '    "main_work_content": null 또는 "채워진 값",\n'
-        '    "safety_plan": null 또는 "채워진 값",\n'
-        '    "worker_count": null 또는 "채워진 값",\n'
-        '    "equipment": null 또는 "채워진 값",\n'
-        '    "site_manager": null 또는 "채워진 값",\n'
-        '    "emergency_plan": null 또는 "채워진 값"\n'
-        "  },\n"
-        '  "next_question": "다음으로 물어볼 항목 key 또는 null(완료)"\n'
+        '  "reply": "자연어 메시지",\n'
+        '  "fields": { 각 필드: null 또는 값 },\n'
+        '  "next_question": "다음 필드 key 또는 null"\n'
         "}\n"
         "미입력 필드는 null, 완료된 필드는 이전 값 유지.\n"
         "JSON 외 다른 텍스트 절대 출력 금지."
