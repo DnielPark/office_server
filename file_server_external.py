@@ -408,7 +408,11 @@ def index():
 
 @app.route("/devnote")
 def devnote():
-    return render_template("devnote.html", projects=PROJECTS)
+    resp = make_response(render_template("devnote.html", projects=PROJECTS))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 @app.route("/devnote/flood-defense")
 def flood_defense_toc():
