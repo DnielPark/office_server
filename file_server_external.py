@@ -524,15 +524,29 @@ def doc_builder_sunday_chat(project_key=None):
     doc_data = doc_api.load_fields()
 
     SUNDAY_CHAT_SYSTEM = (
-        "건설 문서 작성 도우미.\n"
-        "사용자 메시지에서 필드값을 추출해 field/value JSON으로 반환.\n"
-        "정보가 있으면 질문 금지, 즉시 추출.\n"
+        "당신은 건설 현장 문서 작성 도우미입니다.\n"
+        "자연스러운 대화로 정보를 수집하세요. 마치 현장 경험이 많은 선배가 후배에게 묻듯이 편하게.\n"
+        "정보가 확정됐을 때만 json 필드에 키-값을 담아 반환하세요.\n"
         "\n"
-        "필드: work_date(예:2026.06.14(일)09:00~18:00), location, main_work_content, worker_count, equipment, site_manager\n"
-        "질문금지: project_name, contractor, supervision, supervisor_opinion\n"
+        "규칙:\n"
+        "- 대화가 우선입니다. 설문조사 하듯 질문하지 마세요.\n"
+        "- 사용자가 정보를 주면 이해했다는 반응을 보이고, json에 담아 반환하세요.\n"
+        "- 정보가 불명확하면 되물어서 확정한 후에만 json에 담으세요.\n"
+        "- 한 번에 여러 정보를 받으면 각각 json에 담아 반환하세요.\n"
+        "- 질문 금지: project_name, contractor, supervision, supervisor_opinion\n"
+        "- 사용자가 '🤖 AI 자동 생성' 입력 시에만 completed: true\n"
         "\n"
-        '응답: {"reply": "메시지", "field": "키", "value": "값", "completed": false}'
-    )
+        "필드 키:\n"
+        "- work_date: \"2026. 06. 13 (토) 09:00~18:00\" 형식. '이번주 토요일/일요일'은 오늘 날짜 기준으로 계산하세요.\n"
+        "- location: 공종 및 위치 (예: 무명4교 벽체, 슬라브 철근 거푸집 설치)\n"
+        "- main_work_content: 주요 작업 내용\n"
+        "- worker_count: 작업 근로자수\n"
+        "- equipment: 작업 장비\n"
+        "- site_manager: 책임자 (이름, 연락처)\n"
+        "\n"
+        "응답 형식 (반드시 이 JSON만 출력):\n"
+        '{"chat": {"reply": "자연스러운 대화 메시지"}, "json": {"필드키": "값"} 또는 null}')
+
 
     try:
         api_key = os.getenv("DEEPSEEK_API_KEY")
@@ -564,18 +578,14 @@ def doc_builder_sunday_chat(project_key=None):
         )
 
         result = json.loads(response.choices[0].message.content)
-        reply = result.get("reply", "")
-        field_key = result.get("field")
-        field_value = result.get("value")
+        chat_part = result.get("chat", {})
+        json_part = result.get("json")
         completed = result.get("completed", False)
+        reply = chat_part.get("reply", "") if isinstance(chat_part, dict) else str(chat_part)
 
-        # AI가 반환한 키-값이 있으면 api.py로 저장
-        if field_key and field_value and field_key != "null":
-            # AI 자동 생성 필드 (ai_generate)는 fields 맵으로 처리
-            if isinstance(field_value, dict):
-                doc_api.set_fields(field_value)
-            else:
-                doc_api.set_field(field_key, field_value)
+        # json에 키-값이 있으면 api.py로 저장
+        if json_part and isinstance(json_part, dict):
+            doc_api.set_fields(json_part)
 
         # 항상 최신 fields 반환
         updated_data = doc_api.load_fields()
@@ -590,8 +600,7 @@ def doc_builder_sunday_chat(project_key=None):
 
         return jsonify({
             "reply": reply,
-            "field": field_key,
-            "value": field_value,
+            "json_updated": (json_part is not None and len(json_part) > 0) if json_part else False,
             "completed": completed,
             "fields": updated_fields
         })
@@ -602,7 +611,7 @@ def doc_builder_sunday_chat(project_key=None):
         app.logger.error(traceback.format_exc())
         return jsonify({
             "reply": "서버 오류가 발생했습니다. 다시 시도해주세요.",
-            "field": None, "value": None,
+            "json_updated": False,
             "completed": False, "fields": {}
         })
 

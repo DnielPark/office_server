@@ -674,11 +674,8 @@
             messages.push({ role: 'assistant', content: data.reply });
             addMessage(data.reply, 'bot');
 
-            // AI 키-값 저장: field/value 페어
-            if (data.field && data.field !== 'null' && data.value) {
-              setField(data.field, data.value);
-            }
-            // 전체 fields 업데이트 (서버가 항상 최신 상태 반환)
+            // json_updated가 true면 서버가 이미 fields에 저장했음
+            // 응답에 포함된 최신 fields로 UI 업데이트
             if (data.fields) {
               Object.keys(data.fields).forEach(function(k) {
                 if (data.fields[k] && data.fields[k] !== '') {
@@ -722,8 +719,8 @@
     updateProgress();
     updateFieldList();
     setPhase('ask');
-    addMessage('📋 일요일 공사 승인 요청서 작성을 시작합니다.\n\n먼저 **공사 예정일**을 알려주세요. (예: 이번주 일요일, 시간 포함)', 'bot');
-    messages.push({ role: 'assistant', content: '공사 예정일을 알려주세요.' });
+    addMessage('📋 일요일 공사 승인 요청서 작성 시작합니다.\n\n언제 작업할 예정인가요? (예: 이번주 토요일 9시부터 6시까지)', 'bot');
+    messages.push({ role: 'assistant', content: '언제 작업할 예정인가요?' });
     inputEl.focus();
   })();
   </script>
