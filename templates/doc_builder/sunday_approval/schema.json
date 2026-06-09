@@ -1,0 +1,112 @@
+{
+  "doc_type": "sunday_approval",
+  "name": "일요일 공사 승인 요청서",
+  "description": "일요일 공사 승인 요청서를 작성합니다.",
+  "phase": 2,
+  "template": "template.html",
+  "process": [
+    {
+      "phase": "auto",
+      "label": "가. 정보입력",
+      "description": "프로젝트 정보를 자동으로 불러옵니다.",
+      "fields": ["project_name", "contractor", "supervision"]
+    },
+    {
+      "phase": "ask",
+      "label": "나. 공사내용 파악",
+      "description": "사용자에게 정확히 질문하여 내용을 입력합니다.",
+      "fields": ["work_date", "location", "main_work_content", "worker_count", "equipment", "site_manager"]
+    },
+    {
+      "phase": "ai_generate",
+      "label": "다. AI 문서 작성",
+      "description": "AI가 수집된 정보를 바탕으로 문서를 자동 완성합니다.",
+      "fields": ["work_reason", "safety_plan", "emergency_plan"]
+    },
+    {
+      "phase": "manual",
+      "label": "라. 건설사업단 의견",
+      "description": "감리단이 직접 입력합니다.",
+      "fields": ["supervisor_opinion"]
+    }
+  ],
+  "fields": {
+    "project_name": {
+      "type": "auto",
+      "source": "project_info",
+      "source_key": "name",
+      "label": "공사명",
+      "placeholder": "성산천 재해복구사업(1공구)"
+    },
+    "contractor": {
+      "type": "auto",
+      "source": "project_info",
+      "source_key": "contractor",
+      "label": "시공사",
+      "placeholder": "선식건설(주)"
+    },
+    "supervision": {
+      "type": "auto",
+      "source": "project_info",
+      "source_key": "supervision",
+      "label": "건설사업관리단",
+      "placeholder": "㈜동명기술공단"
+    },
+    "work_date": {
+      "type": "ask",
+      "label": "공사예정일",
+      "placeholder": "2026. 06. 07 (일) 09:00 ~ 18:00",
+      "validation": "3_gate",
+      "gates": ["date", "start_time", "end_time"],
+      "format": "YYYY. MM. DD (요일) HH:MM ~ HH:MM"
+    },
+    "location": {
+      "type": "ask",
+      "label": "공종 및 위치",
+      "placeholder": "부대공 / 서천군 중천면 신검리 285-2"
+    },
+    "main_work_content": {
+      "type": "ask",
+      "label": "주요 작업 내용",
+      "placeholder": "카고크레인 이용 가설사무실 인양·설치 및 고정상태 확인"
+    },
+    "worker_count": {
+      "type": "ask",
+      "label": "작업 근로자수",
+      "placeholder": "총 4명 (작업자 3명, 신호수 1명)"
+    },
+    "equipment": {
+      "type": "ask",
+      "label": "작업 장비",
+      "placeholder": "카고크레인 1대, 슬링벨트·샤클·와이어로프 등"
+    },
+    "site_manager": {
+      "type": "ask",
+      "label": "일요일 공사 책임자",
+      "placeholder": "현장대리인 김재업, 010-3676-6766"
+    },
+    "work_reason": {
+      "type": "ai_generate",
+      "label": "일요일 공사 시행 사유",
+      "input": ["main_work_content", "location", "work_date"],
+      "prompt": "작업 내용과 위치, 일정을 바탕으로 일요일 공사가 필요한 사유를 자연스러운 서술형으로 작성합니다."
+    },
+    "safety_plan": {
+      "type": "ai_generate",
+      "label": "안전 조치 계획",
+      "input": ["main_work_content", "equipment", "worker_count"],
+      "prompt": "작업 내용, 장비, 인원을 고려한 안전 조치 계획을 자동으로 수립합니다."
+    },
+    "emergency_plan": {
+      "type": "ai_generate",
+      "label": "비상시 대응체계",
+      "input": ["main_work_content", "location", "site_manager"],
+      "prompt": "작업 내용과 현장 상황에 맞는 비상 대응 계획을 수립합니다."
+    },
+    "supervisor_opinion": {
+      "type": "manual",
+      "label": "건설사업단 의견",
+      "placeholder": "감리단에서 최종 의견을 입력합니다."
+    }
+  }
+}

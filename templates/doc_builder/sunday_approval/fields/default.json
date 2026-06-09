@@ -1,0 +1,21 @@
+{
+  "doc_type": "sunday_approval",
+  "created_at": null,
+  "updated_at": "2026-06-09 15:11:50",
+  "project_key": null,
+  "fields": {
+    "project_name": null,
+    "contractor": null,
+    "supervision": null,
+    "work_date": "이번주 일요일 09:00~18:00",
+    "location": null,
+    "main_work_content": null,
+    "worker_count": null,
+    "equipment": null,
+    "site_manager": null,
+    "work_reason": null,
+    "safety_plan": null,
+    "emergency_plan": null,
+    "supervisor_opinion": null
+  }
+}

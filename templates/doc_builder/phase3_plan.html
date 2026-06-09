@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 3 — Kimi K2.5 OCR 연동 계획</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #2f81f7;
+      --accent2: #58a6ff;
+      --success: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── 헤더 ── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted); margin-bottom: 20px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent); text-decoration: none; }
+
+    .page-header { margin-bottom: 40px; }
+    .phase-badge {
+      display: inline-block;
+      font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+      background: rgba(210,153,34,0.15);
+      color: var(--warning);
+      border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin-bottom: 12px;
+    }
+    .page-title {
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -0.3px; margin-bottom: 8px;
+    }
+    .page-desc {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── 플로우 다이어그램 ── */
+    .flow-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      margin-bottom: 32px;
+    }
+    .flow-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(13,17,23,0.5);
+      border: 1px solid var(--border);
+    }
+    .flow-step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .flow-icon { font-size: 18px; flex-shrink: 0; }
+    .flow-text { flex: 1; font-size: 13px; line-height: 1.5; }
+    .flow-arrow {
+      text-align: center; color: var(--muted); font-size: 14px;
+      padding: 2px 0;
+    }
+    .flow-row.kimi { border-color: rgba(47,129,247,0.3); background: rgba(47,129,247,0.06); }
+    .flow-row.kimi .flow-step-num { background: var(--warning); }
+
+    /* ── 섹션 ── */
+    .section {
+      margin-bottom: 28px;
+    }
+    .section-title {
+      font-size: 16px; font-weight: 600;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .count {
+      font-size: 11px; color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 7px;
+    }
+
+    /* ── 변경 목록 ── */
+    .change-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .change-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px;
+    }
+    .change-tag {
+      font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+      padding: 2px 8px; border-radius: 4px; font-weight: 500;
+    }
+    .change-tag.file { background: rgba(47,129,247,0.12); color: var(--accent); border: 1px solid rgba(47,129,247,0.25); }
+    .change-tag.api { background: rgba(63,185,80,0.12); color: var(--success); border: 1px solid rgba(63,185,80,0.25); }
+    .change-tag.ui { background: rgba(210,153,34,0.12); color: var(--warning); border: 1px solid rgba(210,153,34,0.25); }
+    .change-title { font-size: 14px; font-weight: 600; }
+    .change-desc {
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .change-desc code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      background: rgba(13,17,23,0.6);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--accent2);
+    }
+
+    /* ── 코드 블록 ── */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin: 10px 0;
+      color: var(--accent2);
+    }
+
+    /* ── API 스펙 박스 ── */
+    .endpoint-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .endpoint-method {
+      display: inline-block;
+      font-size: 11px; font-family: 'IBM Plex Mono', monospace; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      margin-right: 8px;
+    }
+    .endpoint-method.post { background: rgba(63,185,80,0.15); color: var(--success); }
+    .endpoint-path {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+    }
+    .endpoint-desc {
+      font-size: 12px; color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ── TODO 체크리스트 ── */
+    .todo-list {
+      list-style: none;
+      padding: 0;
+    }
+    .todo-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .todo-item .check {
+      width: 18px; height: 18px; min-width: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+    .todo-item.active .check { border-color: var(--warning); }
+    .todo-item.done .check { border-color: var(--success); background: var(--success); color: #fff; }
+    .todo-item.active { border-left: 3px solid var(--warning); }
+    .todo-item.done { border-left: 3px solid var(--success); }
+
+    /* ── 배지 ── */
+    .badge {
+      display: inline-block;
+      font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+      padding: 1px 7px; border-radius: 4px; font-weight: 500;
+    }
+    .badge.red { background: rgba(248,81,73,0.12); color: var(--danger); border: 1px solid rgba(248,81,73,0.25); }
+    .badge.green { background: rgba(63,185,80,0.12); color: var(--success); border: 1px solid rgba(63,185,80,0.25); }
+
+    /* ── 푸터 ── */
+    .page-footer {
+      text-align: center; margin-top: 56px;
+      font-size: 12px; color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    /* ── 다른 phase 박스 ── */
+    .phase-box {
+      display: flex; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .phase-box-item {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .phase-box-item.active {
+      border-color: var(--accent);
+      background: rgba(47,129,247,0.06);
+    }
+    .phase-box-item .p-num {
+      font-size: 13px; font-weight: 700; font-family: 'IBM Plex Mono', monospace;
+      margin-bottom: 4px;
+    }
+    .phase-box-item .p-label {
+      font-size: 11px; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- 뒤로가기 -->
+    <a href="/devnote/doc-builder" class="back-link">← 문서 생성기</a>
+
+    <!-- 헤더 -->
+    <header class="page-header">
+      <div class="phase-badge">📸 Phase 3 · 초안</div>
+      <h1 class="page-title">Kimi K2.5 OCR 연동 계획</h1>
+      <p class="page-desc">
+        문서 작성기 채팅창에 이미지/동영상 첨부 기능을 추가하고, Kimi K2.5 멀티모달 API로 OCR을 수행합니다.
+        추출된 텍스트는 채팅에 "📸 키미" 메시지로 참여하며, DeepSeek V4가 이를 해석하여 문서 JSON을 업데이트합니다.
+      </p>
+    </header>
+
+    <!-- Phase 현황 -->
+    <div class="phase-box">
+      <div class="phase-box-item">
+        <div class="p-num" style="color: var(--success);">✅ Phase 1</div>
+        <div class="p-label">문서 작성기 기초 UI</div>
+      </div>
+      <div class="phase-box-item">
+        <div class="p-num" style="color: var(--success);">✅ Phase 2</div>
+        <div class="p-label">DeepSeek 채팅 + JSON 바인딩</div>
+      </div>
+      <div class="phase-box-item active">
+        <div class="p-num" style="color: var(--warning);">🔄 Phase 3</div>
+        <div class="p-label">Kimi K2.5 OCR 연동</div>
+      </div>
+    </div>
+
+    <!-- 플로우 다이어그램 -->
+    <div class="flow-diagram">
+      <div class="flow-title">🔁 이미지 업로드 → OCR 플로우</div>
+      <div class="flow-steps">
+        <div class="flow-row">
+          <div class="flow-step-num">1</div>
+          <div class="flow-icon">👷</div>
+          <div class="flow-text">기술자가 현장 사진/문서를 찍어 <code>📷</code> 버튼으로 업로드</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row">
+          <div class="flow-step-num">2</div>
+          <div class="flow-icon">📤</div>
+          <div class="flow-text">Flask 서버에서 이미지 수신 (<code>/api/ocr/upload</code>)</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row kimi">
+          <div class="flow-step-num">3</div>
+          <div class="flow-icon">📸</div>
+          <div class="flow-text"><strong>Kimi K2.5 API</strong> 호출 — 이미지를 base64로 전송하여 OCR 텍스트 추출</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row">
+          <div class="flow-step-num">4</div>
+          <div class="flow-icon">💬</div>
+          <div class="flow-text">채팅창에 <code>📸 키미</code> 메시지로 OCR 결과 자동 삽입 ("[OCR] 품목: 철근 D16…")</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row">
+          <div class="flow-step-num">5</div>
+          <div class="flow-icon">🧠</div>
+          <div class="flow-text"><strong>DeepSeek V4</strong>가 OCR 메시지를 해석하여 JSON 필드 업데이트</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row">
+          <div class="flow-step-num">6</div>
+          <div class="flow-icon">✅</div>
+          <div class="flow-text">사용자 검수 후 "맞아" / "아니야, 다시" 로 최종 확정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 변경 사항 목록 -->
+    <div class="section">
+      <div class="section-title">📋 변경 사항 <span class="count">3개</span></div>
+
+      <div class="change-card">
+        <div class="change-header">
+          <span class="change-tag ui">UI</span>
+          <span class="change-title">sunday_chat.html</span>
+        </div>
+        <div class="change-desc">
+1. <code>📷</code> 첨부 버튼 기능 활성화 (현재 Phase 3 placeholder alert 제거)
+2. 숨겨진 <code>&lt;input type="file" accept="image/*"&gt;</code> 연결
+3. 업로드 중 프로그레스 표시 (선택)
+4. OCR 결과를 채팅 메시지로 자동 포맷팅하여 삽입
+        </div>
+      </div>
+
+      <div class="change-card">
+        <div class="change-header">
+          <span class="change-tag api">API</span>
+          <span class="change-title">file_server_external.py — 신규 엔드포인트</span>
+        </div>
+        <div class="change-desc">
+<b>POST /api/ocr/upload</b> — 이미지 업로드 + OCR
+- Content-Type: multipart/form-data
+- 필드: <code>image</code> (파일), <code>prompt</code> (옵션, 기본: "이 이미지에서 한글 텍스트를 모두 추출해줘")
+- Kimi K2.5 API로 이미지(base64) 전송
+- 응답: <code>{ "text": "OCR 결과 텍스트" }</code>
+        </div>
+      </div>
+
+      <div class="change-card">
+        <div class="change-header">
+          <span class="change-tag file">환경</span>
+          <span class="change-title">.env — Kimi API 키 추가</span>
+        </div>
+        <div class="change-desc">
+<code>KIMI_API_KEY=sk-xxxxx</code> — Moonshot AI API 키 추가 필요
+        </div>
+      </div>
+    </div>
+
+    <!-- API 스펙 -->
+    <div class="section">
+      <div class="section-title">🔌 API 스펙 <span class="count">2개</span></div>
+
+      <div class="endpoint-box">
+        <div class="endpoint-method post">POST</div>
+        <span class="endpoint-path">/api/ocr/upload</span>
+        <div class="endpoint-desc">
+          이미지를 업로드하면 Kimi K2.5 멀티모달 API로 OCR 수행.<br>
+          요청: <code>multipart/form-data</code> — <code>image</code> (필수), <code>prompt</code> (선택)<br>
+          응답: <code>{ "success": true, "text": "OCR 결과..." }</code>
+        </div>
+      </div>
+
+      <div class="endpoint-box">
+        <div class="endpoint-method post">POST</div>
+        <span class="endpoint-path">/devnote/doc-builder/sunday/chat</span>
+        <div class="endpoint-desc">
+          기존 엔드포인트 — 프론트에서 OCR 결과를 <code>messages</code>에 시스템 메시지로 포함시켜 전송하면
+          DeepSeek이 해석하여 JSON 필드 업데이트.
+        </div>
+      </div>
+    </div>
+
+    <!-- Kimi API 참고 -->
+    <div class="section">
+      <div class="section-title">📚 Kimi K2.5 API 참고</div>
+      <div class="code-block">
+# Kimi API (Moonshot AI) — OpenAI 호환
+POST https://api.moonshot.cn/v1/chat/completions
+Headers:
+  Authorization: Bearer sk-xxxxx
+  Content-Type: application/json
+
+Body:
+{
+  "model": "kimi-k2.5",          # 또는 moonshot-v1-8k
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,..." } },
+        { "type": "text", "text": "이 문서에서 한글 텍스트를 모두 추출해줘" }
+      ]
+    }
+  ],
+  "temperature": 0.1,
+  "max_tokens": 2000
+}
+      </div>
+    </div>
+
+    <!-- TODO 체크리스트 -->
+    <div class="section">
+      <div class="section-title">✅ TODO <span class="count">6개</span></div>
+      <ul class="todo-list">
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>1. .env에 <code>KIMI_API_KEY</code> 추가</span>
+        </li>
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>2. Flask 서버에 <code>/api/ocr/upload</code> 엔드포인트 구현 (Kimi K2.5 멀티모달 연동)</span>
+        </li>
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>3. <code>sunday_chat.html</code> 📷 버튼 활성화 — 파일 선택 → 서버 전송 → OCR 결과 채팅 삽입</span>
+        </li>
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>4. OCR 결과를 "📸 키미" 메시지 포맷으로 채팅에 표시</span>
+        </li>
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>5. DeepSeek 채팅 컨텍스트에 OCR 메시지 포함 — 자연어로 JSON 업데이트 가능</span>
+        </li>
+        <li class="todo-item active">
+          <div class="check"> </div>
+          <span>6. 사용자 검수 피드백 루프 ("맞아" / "아니야, 이건 틀렸어") 처리</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 검토 메모 -->
+    <div class="section">
+      <div class="section-title">📝 검토 필요 사항</div>
+      <div class="change-card">
+        <div class="change-desc" style="color: var(--muted);">
+<b>1. Kimi API 키</b> — Moonshot AI 계정 필요. API 키가 있으면 .env에 등록.<br>
+<b>2. 모델명</b> — <code>kimi-k2.5</code> 정확한 멀티모달 모델명 확인 필요.<br>
+<b>3. 이미지 크기 제한</b> — Kimi API 이미지 크기 제한 확인 후 필요시 리사이즈 로직 추가.<br>
+<b>4. 비용</b> — Kimi K2.5가 Gemini보다 저렴한지 API 가격표 확인.<br>
+<b>5. 보안</b> — 인증된 사용자(로그인)만 OCR 업로드 가능하도록 제한.
+        </div>
+      </div>
+    </div>
+
+    <!-- 추후 확장 -->
+    <div class="section">
+      <div class="section-title">🔮 추후 확장 (Phase 4+)</div>
+      <div class="change-card">
+        <div class="change-desc" style="color: var(--muted);">
+• 동영상 업로드 → 프레임 캡처 후 OCR<br>
+• PDF 문서 OCR → 페이지별 변환<br>
+• 현장 사진 → 작업일보 자동 생성 (사진 분석 + 텍스트 추출)<br>
+• 음성 메모 → STT (Whisper) 연동<br>
+• 다른 문서 유형 (작업일보, 안전일지, 시공계획서)에도 OC… 적용
+        </div>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      © 2026 성산천 사업관리단 · Phase 3 계획 초안
+    </footer>
+  </div>
+</body>
+</html>

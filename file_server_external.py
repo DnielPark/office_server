@@ -5,7 +5,8 @@ file_server_external.py  —  대외용 웹 파일 서버
 """
 
 from flask import (Flask, render_template, send_from_directory, send_file,
-                   request, redirect, url_for, session, abort, jsonify, make_response)
+                   request, redirect, url_for, session, abort, jsonify, make_response,
+                   after_this_request)
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -459,9 +460,16 @@ def doc_builder_index():
     return render_template("doc_builder/index.html")
 
 
+@app.route("/devnote/doc-builder/phase3")
+def doc_builder_phase3():
+    """Phase 3 — Kimi K2.5 OCR 연동 계획 페이지"""
+    return render_template("doc_builder/phase3_plan.html")
+
+
 @app.route("/devnote/doc-builder/sunday")
 @app.route("/files/<project_key>/doc-builder/sunday")
 def doc_builder_sunday(project_key=None):
+    # 프로젝트 정보 로드
     if project_key and project_key in PROJECTS:
         info = PROJECTS[project_key]
         project_info = {
@@ -475,90 +483,127 @@ def doc_builder_sunday(project_key=None):
             "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "선식건설(주) (현장대리인: 김재엽, 010-3676-6766)"),
             "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단 (책임건설사업관리기술인: 윤용주, 010-8863-3460)"),
         }
-    return render_template("doc_builder/sunday_chat.html", project_key=project_key or "devnote", project_info=project_info)
+
+    try:
+        from templates.doc_builder.sunday_approval import api as doc_api
+    except ImportError:
+        import sys
+        sys.path.insert(0, os.path.join(app.root_path, "templates"))
+        from doc_builder.sunday_approval import api as doc_api
+
+    schema = doc_api.load_schema()
+    doc_data = doc_api.load_fields()
+    fields_data = doc_api.merge_project_info(doc_data.get("fields", {}), project_info)
+
+    return render_template(
+        "doc_builder/sunday_approval/chat.html",
+        project_key=project_key or "devnote",
+        project_info=project_info,
+        schema=schema,
+        fields=fields_data,
+        fields_json=json.dumps(fields_data, ensure_ascii=False)
+    )
 
 
 @app.route("/devnote/doc-builder/sunday/chat", methods=["POST"])
 @app.route("/files/<project_key>/doc-builder/sunday/chat", methods=["POST"])
 def doc_builder_sunday_chat(project_key=None):
-    """일요일 공사 승인 요청서 채팅 API (Phase 2-v2: DeepSeek V3)"""
+    """일요일 공사 승인 요청서 채팅 API (V4 + api.py 기반)"""
     data = request.get_json(force=True)
     messages = data.get("messages", [])
+    phase = data.get("phase", "ask")
+
+    try:
+        from templates.doc_builder.sunday_approval import api as doc_api
+    except ImportError:
+        import sys
+        sys.path.insert(0, os.path.join(app.root_path, "templates"))
+        from doc_builder.sunday_approval import api as doc_api
+
+    schema = doc_api.load_schema()
+    doc_data = doc_api.load_fields()
 
     SUNDAY_CHAT_SYSTEM = (
-        "당신은 건설 현장 문서 작성 보조 AI입니다.\n"
-        "사용자와 대화하며 일요일 공사 승인 요청서를 작성합니다.\n\n"
-        "[자동입력 항목 - 절대 질문하지 말 것]\n"
-        "- project_name, contractor, supervision\n\n"
-        "[대화 순서]\n"
-        "1. work_date — 3-gate 검증: 아래 3개 모두 확보될 때만 work_date 필드 확정\n"
-        "  gate 1) 날짜 (년-월-일) : 명시 없으면 대화 맥락에서 추론.\n"
-        "    \"이번주 일요일\" → 서버 현재 날짜 기준 다음 일요일 자동 계산.\n"
-        "    단, 추론한 경우 사용자에게 \"2026년 6월 7일(일)이 맞나요?\" 반드시 확인.\n"
-        "  gate 2) 시작시간 (HH:MM)\n"
-        "  gate 3) 종료시간 (HH:MM)\n"
-        "  3개 중 하나라도 없으면 work_date는 null 유지, 빠진 것만 핀포인트로 재질문.\n"
-        "  3개 모두 확보되면 → \"2026. 06. 07 (일) 09:00 ~ 18:00\" 형식으로 조합해서 반환.\n"
-        "  확정 시 포맷된 값 보여주고 \"맞으면 다음으로 넘어갈게요\" 한 줄 추가.\n"
-        "2. location (공종 및 위치)\n"
-        "3. 작업 내용을 자유롭게 물어본 뒤, 아래 5개 사유 중 해당하는 것 2~3개를 추천:\n"
-        "  reason_1: 긴급 보수·보강\n"
-        "  reason_2: 날씨·기상조건으로 공기 부족\n"
-        "  reason_3: 교통·환경 문제\n"
-        "  reason_4: 연속 시공 필요\n"
-        "  reason_5: 외부요인 공정 지연\n"
-        "  → 사용자가 확인하면 work_reason 배열로 반환\n"
-        "4. main_work_content\n"
-        "5. safety_plan\n"
-        "6. worker_count\n"
-        "7. equipment\n"
-        "8. site_manager\n"
-        "9. emergency_plan (기본값 제시: 사고 발생 시 즉시 작업중지 및 현장대리인 보고 / 응급환자 발생 시 119 신고 및 인근 병원 후송)\n"
-        "10. supervisor_opinion\n\n"
-        "응답 JSON 형식:\n"
-        "{\n"
-        '  "reply": "자연어 메시지",\n'
-        '  "fields": { 각 필드: null 또는 값 },\n'
-        '  "next_question": "다음 필드 key 또는 null"\n'
-        "}\n"
-        "미입력 필드는 null, 완료된 필드는 이전 값 유지.\n"
-        "JSON 외 다른 텍스트 절대 출력 금지."
+        "건설 문서 작성 도우미.\n"
+        "사용자 메시지에서 필드값을 추출해 field/value JSON으로 반환.\n"
+        "정보가 있으면 질문 금지, 즉시 추출.\n"
+        "\n"
+        "필드: work_date(예:2026.06.14(일)09:00~18:00), location, main_work_content, worker_count, equipment, site_manager\n"
+        "질문금지: project_name, contractor, supervision, supervisor_opinion\n"
+        "\n"
+        '응답: {"reply": "메시지", "field": "키", "value": "값", "completed": false}'
     )
 
     try:
         api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
-            return jsonify({
-                "reply": "⚠️ DeepSeek API 키가 설정되지 않았습니다. 관리자에게 문의하세요.",
-                "fields": {},
-                "next_question": None
-            })
+            return jsonify({"reply": "⚠️ API 키 없음", "field": None, "value": None, "completed": False})
 
-        client = OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com"
-        )
+        # OpenAI SDK v2.x needs env var
+        os.environ["OPENAI_API_KEY"] = api_key
+        client = OpenAI(base_url="https://api.deepseek.com")
 
-        api_messages = [{"role": "system", "content": SUNDAY_CHAT_SYSTEM}]
+        # 현재 fields 상태를 컨텍스트에 포함
+        current_fields = doc_data.get("fields", {})
+        filled = {k: v for k, v in current_fields.items() if v}
+        ctx = f"[현재 입력된 필드: {json.dumps(filled, ensure_ascii=False)}]\n" if filled else ""
+
+        # 현재 필드 상태를 첫 번째 시스템 메시지에 포함
+        sys_content = SUNDAY_CHAT_SYSTEM
+        if ctx:
+            sys_content = sys_content + "\n\n" + ctx
+        api_messages = [{"role": "system", "content": sys_content}]
         for m in messages:
             api_messages.append({"role": m["role"], "content": m["content"]})
 
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek-v4-flash",
             messages=api_messages,
             response_format={"type": "json_object"},
-            max_tokens=1000
+            max_tokens=1500
         )
 
         result = json.loads(response.choices[0].message.content)
-        return jsonify(result)
+        reply = result.get("reply", "")
+        field_key = result.get("field")
+        field_value = result.get("value")
+        completed = result.get("completed", False)
+
+        # AI가 반환한 키-값이 있으면 api.py로 저장
+        if field_key and field_value and field_key != "null":
+            # AI 자동 생성 필드 (ai_generate)는 fields 맵으로 처리
+            if isinstance(field_value, dict):
+                doc_api.set_fields(field_value)
+            else:
+                doc_api.set_field(field_key, field_value)
+
+        # 항상 최신 fields 반환
+        updated_data = doc_api.load_fields()
+        updated_fields = doc_api.merge_project_info(
+            updated_data.get("fields", {}),
+            {
+                "name": "성산천 재해복구사업(1공구)",
+                "contractor": os.getenv("SUNGSAN1_CONTRACTOR", "선식건설(주)"),
+                "supervision": os.getenv("SUNGSAN1_SUPERVISION", "㈜동명기술공단")
+            }
+        )
+
+        return jsonify({
+            "reply": reply,
+            "field": field_key,
+            "value": field_value,
+            "completed": completed,
+            "fields": updated_fields
+        })
 
     except Exception as e:
         app.logger.error(f"DeepSeek API error: {e}")
+        import traceback
+        app.logger.error(traceback.format_exc())
         return jsonify({
             "reply": "서버 오류가 발생했습니다. 다시 시도해주세요.",
-            "fields": {},
-            "next_question": None
+            "field": None, "value": None,
+            "completed": False, "fields": {}
         })
 
 
@@ -1206,7 +1251,11 @@ def api_delete_selected():
 
 @app.route("/api/download-selected", methods=["POST"])
 def api_download_selected():
-    data = request.get_json()
+    # JSON 또는 form-encoded 모두 지원
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = json.loads(request.form.get("payload", "{}"))
     project_key = data.get("project", "")
     paths = data.get("paths", [])
 
@@ -1218,21 +1267,55 @@ def api_download_selected():
         return jsonify({"ok": False, "msg": "선택된 파일이 없습니다."}), 400
 
     base = SHARED_FOLDER / project_key
-    buf = io.BytesIO()
+    base_str = str(base.resolve())
+    file_count = 0
+    folder_count = 0
 
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for p in paths:
-            target = safe_path(base, p)
-            if target.is_file():
-                zf.write(str(target), Path(p).name)
+    # 임시 ZIP 파일 생성 (메모리 대신 디스크 사용 → 대용량 안전)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+    tmp_path = tmp.name
 
-    buf.seek(0)
-    return send_file(
-        buf,
-        mimetype="application/zip",
-        as_attachment=True,
-        download_name="files.zip",
-    )
+    try:
+        with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zf:
+            for p in paths:
+                target = safe_path(base, p)
+                if target.is_file():
+                    zf.write(str(target), p.replace("\\", "/"))
+                    file_count += 1
+                elif target.is_dir():
+                    folder_count += 1
+                    for root, dirs, files_ in os.walk(str(target)):
+                        for fname in files_:
+                            fpath = os.path.join(root, fname)
+                            # ZIP 표준: 경로 구분자는 항상 슬래시
+                            rel = os.path.relpath(fpath, base_str).replace("\\", "/")
+                            zf.write(fpath, rel)
+                            file_count += 1
+
+        tmp.close()
+        logging.info(f"ZIP 다운로드: {len(paths)}개 항목 ({folder_count}개 폴더 포함), 총 {file_count}개 파일 → {tmp_path}")
+
+        @after_this_request
+        def cleanup_zip(response):
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+            return response
+
+        return send_file(
+            tmp_path,
+            mimetype="application/zip",
+            as_attachment=True,
+            download_name="files.zip",
+        )
+    except Exception:
+        # 에러 시 임시 파일 정리
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+        raise
 
 
 @app.route("/api/list-dirs", methods=["POST"])

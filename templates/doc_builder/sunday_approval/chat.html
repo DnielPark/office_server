@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── 전역 리셋 ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -27,6 +26,7 @@
       --text: #e6edf3;
       --muted: #8b949e;
       --success: #3fb950;
+      --warning: #d29922;
 
       --serif: 'Noto Serif KR', 'Batang', serif;
       --sans: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
@@ -40,7 +40,6 @@
       overflow: hidden;
     }
 
-    /* ── 상단 바 ── */
     .top-bar {
       display: flex;
       align-items: center; gap: 12px;
@@ -85,7 +84,7 @@
     .preview-panel::-webkit-scrollbar-track { background: transparent; }
     .preview-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ── A4 페이지 (인쇄용 템플릿) ── */
+    /* ── A4 페이지 ── */
     .a4-page {
       width: 210mm; min-height: 297mm;
       margin: 0 auto;
@@ -190,30 +189,6 @@
       min-height: 11mm; line-height: 1.5;
     }
 
-    .reason-list {
-      border: 1px solid var(--rule); border-radius: 1px; overflow: hidden;
-    }
-    .reason-item {
-      display: flex; align-items: flex-start; gap: 3mm;
-      padding: 2.5mm 3.5mm;
-      border-bottom: 1px solid var(--pale);
-      font-size: 8.5pt; line-height: 1.55;
-      color: var(--dark); transition: background 0.3s;
-    }
-    .reason-item:last-child { border-bottom: none; }
-    .reason-item.checked {
-      background: var(--fill-empty); color: var(--black); font-weight: 500;
-    }
-    .reason-check {
-      width: 4mm; height: 4mm; min-width: 4mm;
-      border: 1px solid var(--rule); margin-top: 0.8mm;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 7pt; color: var(--black); background: white; flex-shrink: 0;
-    }
-    .reason-item.checked .reason-check {
-      background: var(--dark); border-color: var(--dark); color: white;
-    }
-
     .mgmt-grid {
       border: 1px solid var(--rule); border-radius: 1px; overflow: hidden;
     }
@@ -254,7 +229,30 @@
       padding: 0.5mm 2mm; border-radius: 2px; letter-spacing: 0.05em;
     }
 
-    /* ── 오른쪽: 채팅 패널 ── */
+    /* ── 진행 상태 표시 ── */
+    .phase-indicator {
+      display: flex; gap: 4px; padding: 10px 18px;
+      border-bottom: 1px solid var(--border);
+      background: #121a2a; flex-shrink: 0;
+    }
+    .phase-step {
+      flex: 1; padding: 6px 8px; border-radius: 6px;
+      font-size: 11px; text-align: center;
+      border: 1px solid var(--border);
+      transition: all .2s;
+    }
+    .phase-step .p-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+    .phase-step.pending { background: transparent; color: var(--muted); }
+    .phase-step.active {
+      background: rgba(47,129,247,0.12);
+      border-color: var(--accent); color: var(--accent);
+    }
+    .phase-step.done {
+      background: rgba(63,185,80,0.1);
+      border-color: var(--success); color: var(--success);
+    }
+
+    /* ── 채팅 ── */
     .chat-panel {
       width: 50%; display: flex; flex-direction: column;
       background: var(--surface);
@@ -269,11 +267,44 @@
     }
     .chat-header .ai-name .dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--success); display: inline-block;
+      display: inline-block;
     }
+    .chat-header .ai-name .dot.auto { background: var(--success); }
+    .chat-header .ai-name .dot.ask { background: var(--accent); }
+    .chat-header .ai-name .dot.ai_generate { background: var(--warning); }
+    .chat-header .ai-name .dot.manual { background: var(--muted); }
     .chat-header .ai-desc {
       font-size: 11px; color: var(--muted); margin-top: 2px;
     }
+    .chat-header #phase-label {
+      font-size: 11px; color: var(--muted); margin-top: 4px;
+    }
+
+    /* ── 필드 현황판 ── */
+    .field-list {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      padding: 6px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #0f1622;
+      flex-shrink: 0; max-height: 80px; overflow-y: auto;
+    }
+    .field-list::-webkit-scrollbar { width: 3px; }
+    .field-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .field-list-item {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      white-space: nowrap; display: flex; align-items: center; gap: 4px;
+    }
+    .field-list-item.filled {
+      background: rgba(63,185,80,0.12);
+      color: var(--success);
+      border: 1px solid rgba(63,185,80,0.2);
+    }
+    .field-list-item.empty {
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .field-list-item .fl-status { font-size: 8px; }
+    .field-list-item .fl-label { font-weight: 400; }
 
     .chat-messages {
       flex: 1; overflow-y: auto;
@@ -349,16 +380,22 @@
     #send-btn { background: var(--accent); color: #fff; }
     #send-btn:hover { background: var(--accent2); }
     #send-btn:disabled { opacity: 0.5; cursor: default; }
-    #attach-btn {
+    #auto-btn {
       background: transparent; color: var(--muted);
       border: 1px solid var(--border);
     }
-    #attach-btn:hover { color: var(--text); border-color: var(--muted); }
+    #auto-btn:hover { color: var(--text); border-color: var(--muted); }
+    #auto-btn.ai-ready { border-color: var(--warning); color: var(--warning); animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
 
     /* ── 인쇄 ── */
     @media print {
       body { background: white; overflow: visible; }
       .top-bar { display: none; }
+      .phase-indicator { display: none; }
       .chat-panel { display: none; }
       .preview-panel { width: 100%; border: none; padding: 0; overflow: visible; }
       .a4-page {
@@ -384,146 +421,47 @@
     <button id="print-btn" onclick="window.print()">🖨 PDF 출력</button>
   </div>
 
+  <!-- 진행 상태 -->
+  <div class="phase-indicator" id="phase-indicator">
+    <div class="phase-step" data-phase="auto">
+      <span class="p-icon">📋</span> 정보입력
+    </div>
+    <div class="phase-step" data-phase="ask">
+      <span class="p-icon">✏️</span> 내용파악
+    </div>
+    <div class="phase-step" data-phase="ai_generate">
+      <span class="p-icon">🤖</span> AI 작성
+    </div>
+    <div class="phase-step" data-phase="manual">
+      <span class="p-icon">✅</span> 완료
+    </div>
+  </div>
+
   <!-- 메인 레이아웃 -->
   <div class="main-layout">
 
     <!-- ── 왼쪽: A4 미리보기 ── -->
     <div class="preview-panel">
-      <div class="a4-page" id="a4-doc">
-
-        <!-- 타이틀 -->
-        <div class="doc-header">
-          <h1 class="doc-title">일요일 공사 승인 요청서</h1>
-          <p class="doc-subtitle">Sunday Construction Approval Request</p>
-        </div>
-
-        <!-- 가. 공사 개요 -->
-        <div class="section">
-          <div class="section-label">가. 공사 개요 <span class="section-no">Project Overview</span></div>
-          <div class="overview-grid">
-            <div class="ov-key">공 사 명</div>
-            <div class="ov-val">
-              <span class="field-value" data-field="project_name">{{ project_info.name }}</span>
-            </div>
-            <div class="ov-key">공사예정일</div>
-            <div class="ov-val">
-              <span class="field-value empty" data-field="work_date" data-placeholder="예: 2026. 06. 07 (일) 08:00 ~ 17:00"> </span>
-            </div>
-            <div class="ov-key">공종 및 위치</div>
-            <div class="ov-val">
-              <span class="field-value empty" data-field="location" data-placeholder="예: 부대공 / 서천군 중천면 신검리 285-2"> </span>
-            </div>
-            <div class="ov-key">시 공 사</div>
-            <div class="ov-val">
-              <span class="field-value" data-field="contractor">{{ project_info.contractor }}</span>
-            </div>
-            <div class="ov-key">건설사업관리단</div>
-            <div class="ov-val" style="border-bottom:none;">
-              <span class="field-value" data-field="supervision">{{ project_info.supervision }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 나. 일요일 공사 시행 사유 -->
-        <div class="section">
-          <div class="section-label">나. 일요일 공사 시행 사유 <span class="section-no">Reason for Sunday Work</span></div>
-          <div class="reason-list">
-            <div class="reason-item" id="reason_1">
-              <div class="reason-check" id="rc_1"></div>
-              <span>사고·재해의 복구 및 예방과 안전 확보를 위하여 긴급 보수·보강 공사가 필요한 경우</span>
-            </div>
-            <div class="reason-item" id="reason_2">
-              <div class="reason-check" id="rc_2"></div>
-              <span>날씨·기상조건에 따라 작업일수가 부족하여 추가 작업이 필요한 경우</span>
-            </div>
-            <div class="reason-item" id="reason_3">
-              <div class="reason-check" id="rc_3"></div>
-              <span>교통·환경 등의 문제로 평일 공사 시행이 어려운 경우</span>
-            </div>
-            <div class="reason-item" id="reason_4">
-              <div class="reason-check" id="rc_4"></div>
-              <span>공법·공사의 특성상 연속적인 시공이 필요한 경우</span>
-            </div>
-            <div class="reason-item" id="reason_5">
-              <div class="reason-check" id="rc_5"></div>
-              <span>민원·소송·보상 문제 등 건설사업자의 귀책사유가 아닌 외부요인으로 인하여 공정이 지연된 경우</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 다. 현장관리 계획 -->
-        <div class="section">
-          <div class="section-label">다. 현장관리 계획 <span class="section-no">Site Management Plan</span></div>
-          <div class="mgmt-grid">
-            <div class="mgmt-row">
-              <div class="mgmt-key">주요 작업 내용</div>
-              <div class="mgmt-val">
-                <span class="field-value empty" data-field="main_work_content" data-placeholder="예: 카고크레인 이용 가설사무실 인양·설치 및 고정상태 확인"> </span>
-              </div>
-            </div>
-            <div class="mgmt-row">
-              <div class="mgmt-key">안전 조치 계획</div>
-              <div class="mgmt-val">
-                <span class="field-value empty" data-field="safety_plan" data-placeholder="예: 작업 전 TBM 실시, 인양 하부 출입금지, 줄걸이 상태 확인"> </span>
-              </div>
-            </div>
-            <div class="mgmt-row">
-              <div class="mgmt-key">작업 근로자수<br><small style="font-size:7pt;color:#aaa">(공종별)</small></div>
-              <div class="mgmt-val">
-                <span class="field-value empty" data-field="worker_count" data-placeholder="예: 총 4명 (작업자 3명, 신호수 1명)"> </span>
-              </div>
-            </div>
-            <div class="mgmt-row">
-              <div class="mgmt-key">작업 장비</div>
-              <div class="mgmt-val">
-                <span class="field-value empty" data-field="equipment" data-placeholder="예: 카고크레인 1대, 슬링벨트·샤클·와이어로프 등"> </span>
-              </div>
-            </div>
-            <div class="mgmt-row" style="border-bottom:none;">
-              <div class="mgmt-key">일요일 공사<br>책임자</div>
-              <div class="mgmt-val">
-                <span class="field-value empty" data-field="site_manager" data-placeholder="예: 현장대리인 김재업, 010-3676-6766"> </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 라. 비상시 대응체계 -->
-        <div class="section">
-          <div class="section-label">라. 비상시 대응체계 <span class="section-no">Emergency Response</span></div>
-          <div class="emergency-box">
-            <span class="field-value empty" data-field="emergency_plan" data-placeholder="예: 사고 발생 시 즉시 작업중지 및 현장대리인 보고 / 응급환자 발생 시 119 신고 및 인근 병원 후송"> </span>
-          </div>
-        </div>
-
-        <!-- 마. 건설사업단 의견 -->
-        <div class="section">
-          <div class="section-label">마. 건설사업단 의견 <span class="section-no">Supervision Opinion</span></div>
-          <div class="opinion-box">
-            <span class="opinion-badge">감리단 입력</span>
-            <span class="field-value empty" data-field="supervisor_opinion" data-placeholder="감리단에서 최종 의견을 입력합니다."> </span>
-          </div>
-        </div>
-
-      </div><!-- /.a4-page -->
-    </div><!-- /.preview-panel -->
+      {% include 'doc_builder/sunday_approval/template.html' %}
+    </div>
 
     <!-- ── 오른쪽: 채팅 패널 ── -->
     <div class="chat-panel">
       <div class="chat-header">
         <div class="ai-name">
-          <span class="dot"></span>
+          <span class="dot" id="status-dot"></span>
           AI 문서 도우미
         </div>
-        <div class="ai-desc">일요일 공사 승인 요청서 작성 (Phase 2-v2)</div>
+        <div class="ai-desc" id="phase-desc">3단계 자동 문서 작성</div>
       </div>
+      <div class="field-list" id="field-list"></div>
 
       <div class="chat-messages" id="chat-messages"></div>
 
       <div class="chat-input-area">
         <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." autocomplete="off">
         <div class="btn-group">
-          <button id="attach-btn" title="사진 첨부" onclick="alert('사진 첨부는 Phase 3에서 지원됩니다')">📷</button>
+          <button id="auto-btn" title="AI 자동 생성" onclick="triggerAutoGenerate()">🤖</button>
           <button id="send-btn">➤</button>
         </div>
       </div>
@@ -536,22 +474,51 @@
     'use strict';
 
     var API_URL = '/devnote/doc-builder/sunday/chat';
+    var fieldLabels = {
+      'project_name': '공사명',
+      'contractor': '시공사',
+      'supervision': '건설사업관리단',
+      'work_date': '공사예정일',
+      'location': '공종 및 위치',
+      'main_work_content': '주요 작업 내용',
+      'worker_count': '작업 근로자수',
+      'equipment': '작업 장비',
+      'site_manager': '일요일 공사 책임자',
+      'work_reason': '일요일 공사 시행 사유',
+      'safety_plan': '안전 조치 계획',
+      'emergency_plan': '비상시 대응체계',
+      'supervisor_opinion': '건설사업단 의견'
+    };
     var requiredFields = [
       'work_date', 'location', 'work_reason',
       'main_work_content', 'safety_plan', 'worker_count',
       'equipment', 'site_manager', 'emergency_plan', 'supervisor_opinion'
     ];
     var autoFields = ['project_name', 'contractor', 'supervision'];
+    var askFields = ['work_date', 'location', 'main_work_content', 'worker_count', 'equipment', 'site_manager'];
+    var aiFields = ['work_reason', 'safety_plan', 'emergency_plan'];
+
     var messages = [];
     var completedFields = {};
+    var currentPhase = 'auto';
 
     var chatEl = document.getElementById('chat-messages');
     var inputEl = document.getElementById('chat-input');
     var sendBtn = document.getElementById('send-btn');
+    var autoBtn = document.getElementById('auto-btn');
     var printBtn = document.getElementById('print-btn');
     var progressText = document.getElementById('progress-text');
+    var statusDot = document.getElementById('status-dot');
+    var phaseDesc = document.getElementById('phase-desc');
 
-    // 자동입력 필드는 처음부터 완료
+    // 초기 fields
+    var initFields = {{ fields_json | safe }};
+    Object.keys(initFields).forEach(function(k) {
+      if (initFields[k] && initFields[k] !== '') {
+        completedFields[k] = true;
+      }
+    });
+    // auto 필드도 완료 처리
     autoFields.forEach(function(k) { completedFields[k] = true; });
 
     function scrollChat() { chatEl.scrollTop = chatEl.scrollHeight; }
@@ -559,6 +526,14 @@
     function addMessage(text, role) {
       var div = document.createElement('div');
       div.className = 'msg ' + role;
+      div.textContent = text;
+      chatEl.appendChild(div);
+      scrollChat();
+    }
+
+    function addSystemMessage(text) {
+      var div = document.createElement('div');
+      div.className = 'msg system';
       div.textContent = text;
       chatEl.appendChild(div);
       scrollChat();
@@ -583,56 +558,94 @@
         if (completedFields[f]) done++;
       });
       progressText.textContent = done + '/' + requiredFields.length + ' 항목';
-      if (done >= requiredFields.length) {
-        printBtn.classList.add('active');
-        printBtn.textContent = '🖨 PDF 출력';
-      } else {
-        printBtn.classList.remove('active');
-        printBtn.textContent = '🖨 PDF 출력';
-      }
+      printBtn.classList.toggle('active', done >= requiredFields.length);
+    }
+
+    function updateFieldList() {
+      var list = document.getElementById('field-list');
+      if (!list) return;
+      list.innerHTML = '';
+      requiredFields.forEach(function(key) {
+        var el = document.createElement('div');
+        el.className = 'field-list-item' + (completedFields[key] ? ' filled' : ' empty');
+        var label = fieldLabels[key] || key;
+        var val = completedFields[key] ? '✓' : '○';
+        el.innerHTML = '<span class="fl-status">' + val + '</span><span class="fl-label">' + label + '</span>';
+        list.appendChild(el);
+      });
+    }
+
+    function setPhase(phase) {
+      currentPhase = phase;
+      var steps = document.querySelectorAll('.phase-step');
+      steps.forEach(function(s) {
+        var p = s.getAttribute('data-phase');
+        s.classList.remove('active', 'done', 'pending');
+        if (p === phase) s.classList.add('active');
+        else if (isPhaseDone(p)) s.classList.add('done');
+        else s.classList.add('pending');
+      });
+
+      var phaseLabels = {
+        'auto': '📋 자동 정보 입력',
+        'ask': '✏️ 공사 내용 파악',
+        'ai_generate': '🤖 AI 문서 작성',
+        'manual': '✅ 검토 완료'
+      };
+      phaseDesc.textContent = phaseLabels[phase] || phase;
+
+      var dotColors = {
+        'auto': 'var(--success)',
+        'ask': 'var(--accent)',
+        'ai_generate': 'var(--warning)',
+        'manual': 'var(--muted)'
+      };
+      statusDot.style.background = dotColors[phase] || 'var(--muted)';
+
+      autoBtn.classList.toggle('ai-ready', phase === 'ai_generate');
+    }
+
+    function isPhaseDone(phase) {
+      var fields;
+      if (phase === 'auto') fields = autoFields;
+      else if (phase === 'ask') fields = askFields;
+      else if (phase === 'ai_generate') fields = aiFields;
+      else return false;
+      return fields.every(function(f) { return completedFields[f]; });
+    }
+
+    function getCurrentPhase() {
+      if (!isPhaseDone('auto')) return 'auto';
+      if (!isPhaseDone('ask')) return 'ask';
+      if (!isPhaseDone('ai_generate')) return 'ai_generate';
+      return 'manual';
     }
 
     function setField(fieldKey, value) {
-      // work_reason 특별 처리
-      if (fieldKey === 'work_reason' && Array.isArray(value)) {
-        value.forEach(function(reasonId) {
-          var item = document.getElementById(reasonId);
-          var check = document.getElementById('rc_' + reasonId.replace('reason_', ''));
-          if (item) item.classList.add('checked');
-          if (check) check.textContent = '✓';
+      if (!fieldKey || fieldKey === 'null' || !value) return;
+      // 필드 값이 객체(dict)면 각각 처리
+      if (typeof value === 'object') {
+        Object.keys(value).forEach(function(k) {
+          setField(k, value[k]);
         });
-        completedFields['work_reason'] = true;
-        updateProgress();
         return;
       }
 
-      // 일반 필드
       var el = document.querySelector('[data-field="' + fieldKey + '"]');
       if (!el) return;
-      var val = String(value || '');
+      var val = String(value);
       if (!val) return;
 
       el.textContent = val;
-      el.classList.remove('empty');
-      el.classList.remove('highlight', 'done-highlight');
+      el.classList.remove('empty', 'highlight', 'done-highlight');
       void el.offsetWidth;
-      if (completedFields[fieldKey]) {
-        el.classList.add('done-highlight');
-      } else {
-        el.classList.add('highlight');
-      }
+      el.classList.add(completedFields[fieldKey] ? 'done-highlight' : 'highlight');
       setTimeout(function() { el.classList.remove('highlight'); }, 1500);
       completedFields[fieldKey] = true;
       updateProgress();
-    }
-
-    function applyFields(newFields) {
-      if (!newFields) return;
-      Object.keys(newFields).forEach(function(key) {
-        if (newFields[key] !== null && newFields[key] !== undefined && newFields[key] !== '') {
-          setField(key, newFields[key]);
-        }
-      });
+      updateFieldList();
+      var newPhase = getCurrentPhase();
+      if (newPhase !== currentPhase) setPhase(newPhase);
     }
 
     function sendMessage(text) {
@@ -640,16 +653,7 @@
       inputEl.value = '';
       addMessage(text, 'user');
 
-      var currentFields = {};
-      requiredFields.forEach(function(key) {
-        var el = document.querySelector('[data-field="' + key + '"]');
-        if (el && !el.classList.contains('empty')) {
-          currentFields[key] = el.textContent;
-        } else {
-          currentFields[key] = null;
-        }
-      });
-
+      var phase = getCurrentPhase();
       messages.push({ role: 'user', content: text });
 
       showTyping();
@@ -669,35 +673,57 @@
             var data = JSON.parse(xhr.responseText);
             messages.push({ role: 'assistant', content: data.reply });
             addMessage(data.reply, 'bot');
-            if (data.fields) applyFields(data.fields);
-            if (data.next_question === null) {
-              addMessage('✅ 모든 항목이 작성되었습니다! 상단의 "PDF 출력" 버튼을 눌러 출력하세요.', 'system');
+
+            // AI 키-값 저장: field/value 페어
+            if (data.field && data.field !== 'null' && data.value) {
+              setField(data.field, data.value);
+            }
+            // 전체 fields 업데이트 (서버가 항상 최신 상태 반환)
+            if (data.fields) {
+              Object.keys(data.fields).forEach(function(k) {
+                if (data.fields[k] && data.fields[k] !== '') {
+                  setField(k, data.fields[k]);
+                }
+              });
+            }
+            if (data.completed) {
+              addSystemMessage('✅ 모든 항목이 작성되었습니다! "PDF 출력" 버튼을 눌러 출력하세요.');
             }
           } catch(e) {
-            addMessage('응답 처리 중 오류가 발생했습니다.', 'bot');
+            addSystemMessage('응답 처리 중 오류 (' + e.message + ')');
           }
         } else {
-          addMessage('서버 통신 오류 (' + xhr.status + ')', 'bot');
+          addSystemMessage('서버 통신 오류 (' + xhr.status + ')');
         }
       };
       xhr.onerror = function() {
         hideTyping();
         inputEl.disabled = false;
         sendBtn.disabled = false;
-        addMessage('네트워크 오류가 발생했습니다.', 'bot');
+        addSystemMessage('네트워크 오류.');
       };
-      xhr.send(JSON.stringify({ messages: messages, current_fields: currentFields }));
+      xhr.send(JSON.stringify({ messages: messages, phase: phase }));
     }
+
+    window.triggerAutoGenerate = function() {
+      if (getCurrentPhase() !== 'ai_generate') {
+        addSystemMessage('⚠️ 먼저 채팅으로 공사 내용을 입력해주세요.');
+        return;
+      }
+      sendMessage('🤖 AI 자동 생성');
+    };
 
     sendBtn.addEventListener('click', function() { sendMessage(inputEl.value); });
     inputEl.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); sendMessage(inputEl.value); }
     });
 
-    // 초기화
+    // ── 초기화 ──
     updateProgress();
-    addMessage('안녕하세요! 📋 일요일 공사 승인 요청서 작성을 시작하겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**을 알려주세요.', 'bot');
-    messages.push({ role: 'assistant', content: '안녕하세요! 📋 일요일 공사 승인 요청서 작성을 시작하겠습니다.\n\n먼저 **공사 예정일**과 **작업 시간**을 알려주세요.' });
+    updateFieldList();
+    setPhase('ask');
+    addMessage('📋 일요일 공사 승인 요청서 작성을 시작합니다.\n\n먼저 **공사 예정일**을 알려주세요. (예: 이번주 일요일, 시간 포함)', 'bot');
+    messages.push({ role: 'assistant', content: '공사 예정일을 알려주세요.' });
     inputEl.focus();
   })();
   </script>

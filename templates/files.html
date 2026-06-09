@@ -702,11 +702,15 @@ const CURRENT_PATH = "{{ current_path }}";
 
 function showToast(msg, type) {
   const t = document.getElementById("toast");
-  var icon = type === "error" ? "⚠ " : "✓ ";
-  t.textContent = icon + msg; // innerHTML 금지: URL/파일명 값이 그대로 실행되지 않도록
+  var icon = "✓ ";
+  if (type === "error") icon = "⚠ ";
+  else if (type === "info") icon = "📦 ";
+  t.textContent = icon + msg;
   t.className = type;
   t.style.display = "block";
-  setTimeout(() => { t.style.display = "none"; }, 5000);
+  // info 메시지는 더 오래 표시 (압축 시간 고려)
+  var duration = type === "info" ? 8000 : 5000;
+  setTimeout(() => { t.style.display = "none"; }, duration);
 }
 
 async function doMkdir() {
@@ -782,34 +786,32 @@ function updateDL() {
   });
 }
 
-// 선택 다운로드 (ZIP)
-async function doDownloadSelected() {
+// 선택 다운로드 (ZIP) — FORM 제출 방식 (브라우저 네이티브 다운로드 + 진행바)
+function doDownloadSelected() {
   const checked = document.querySelectorAll(".file-check-item:checked");
   if (checked.length === 0) { showToast("파일을 선택하세요.", "error"); return; }
 
   const paths = [];
   checked.forEach(cb => paths.push(cb.dataset.path));
 
-  const res = await fetch("/api/download-selected", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ project: PROJECT_KEY, paths: paths })
-  });
+  // 숨겨진 form 생성 → POST 제출 → 브라우저가 직접 다운로드 처리
+  showToast("📦 압축 준비 중... (파일 많을수록 오래 걸림)", "info");
 
-  if (!res.ok) {
-    const data = await res.json();
-    showToast(data.msg || "다운로드 실패", "error");
-    return;
-  }
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/api/download-selected";
+  form.style.display = "none";
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "files.zip";
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("다운로드 시작!", "success");
+  // JSON 데이터를 hidden input에 담아 전송
+  const inp = document.createElement("input");
+  inp.type = "hidden";
+  inp.name = "payload";
+  inp.value = JSON.stringify({ project: PROJECT_KEY, paths: paths });
+  form.appendChild(inp);
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
 
   // 선택 해제
   document.querySelectorAll(".file-check-item").forEach(cb => cb.checked = false);
