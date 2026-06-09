@@ -719,8 +719,8 @@
     updateProgress();
     updateFieldList();
     setPhase('ask');
-    addMessage('📋 일요일 공사 승인 요청서 작성 시작합니다.\n\n언제 작업할 예정인가요? (예: 이번주 토요일 9시부터 6시까지)', 'bot');
-    messages.push({ role: 'assistant', content: '언제 작업할 예정인가요?' });
+    addMessage('📋 일요일 공사 승인 요청서 작성 시작합니다.\n\n**공사 개요**부터 여쭤볼게요. 언제, 어디서, 무슨 작업을 하실 예정인가요?', 'bot');
+    messages.push({ role: 'assistant', content: '공사 개요부터 여쭤볼게요. 언제, 어디서, 무슨 작업을 하실 예정인가요?' });
     inputEl.focus();
   })();
   </script>

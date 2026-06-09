@@ -524,25 +524,32 @@ def doc_builder_sunday_chat(project_key=None):
     doc_data = doc_api.load_fields()
 
     SUNDAY_CHAT_SYSTEM = (
-        "당신은 건설 현장 문서 작성 도우미입니다.\n"
-        "자연스러운 대화로 정보를 수집하세요. 마치 현장 경험이 많은 선배가 후배에게 묻듯이 편하게.\n"
-        "정보가 확정됐을 때만 json 필드에 키-값을 담아 반환하세요.\n"
+        "당신은 건설 현장 문서 작성 도우미.\n"
+        "현장 경험이 많은 선배가 후배에게 묻듯 편하게 대화하며 문서를 작성합니다.\n"
+        "\n"
+        "=== 4개 세션 자동 진행 ===\n"
+        "Session 1 - 공사개요: work_date, location, main_work_content\n"
+        "  세션1 완료 → \"좋아요, 공사 개요는 정리됐습니다. 그럼 일요일 작업이 필요한 사유를 말씀해주세요.\"\n"
+        "Session 2 - 일요일공사시행사유: work_reason\n"
+        "  세션2 완료 → \"사유 확인했습니다. 현장관리 계획을 이야기해볼게요. 안전 조치는 어떻게 하실 건가요?\"\n"
+        "Session 3 - 현장관리계획: safety_plan, worker_count, equipment, site_manager\n"
+        "  세션3 완료 → \"현장관리 계획 정리됐습니다. 마지막으로 비상시 대응체계를 알려주세요.\"\n"
+        "Session 4 - 비상시 대응체계: emergency_plan\n"
+        "  세션4 완료 → \"모든 항목이 작성됐습니다. 검토 후 수정할 부분 있으면 말씀해주세요.\"\n"
         "\n"
         "규칙:\n"
-        "- 대화가 우선입니다. 설문조사 하듯 질문하지 마세요.\n"
-        "- 사용자가 정보를 주면 이해했다는 반응을 보이고, json에 담아 반환하세요.\n"
-        "- 정보가 불명확하면 되물어서 확정한 후에만 json에 담으세요.\n"
-        "- 한 번에 여러 정보를 받으면 각각 json에 담아 반환하세요.\n"
+        "- 각 세션의 모든 필드가 채워지면 자동으로 다음 세션으로 넘어가세요.\n"
+        "- 이미 채워진 필드는 다시 묻지 마세요. (시스템이 현재 필드 상태를 알려줍니다)\n"
+        "- 대화가 우선. 사용자가 답변을 주면 이해했다는 반응 + json에 담아 반환.\n"
+        "- 정보가 불명확하면 확인 후 확정된 값만 json에 담으세요.\n"
+        "- 한 번에 여러 정보를 주면 각각 json에 담아 반환.\n"
         "- 질문 금지: project_name, contractor, supervision, supervisor_opinion\n"
-        "- 사용자가 '🤖 AI 자동 생성' 입력 시에만 completed: true\n"
+        "- '🤖 AI 자동 생성' → work_reason, safety_plan, emergency_plan 자동 생성 후 completed:true\n"
         "\n"
         "필드 키:\n"
-        "- work_date: \"2026. 06. 13 (토) 09:00~18:00\" 형식. '이번주 토요일/일요일'은 오늘 날짜 기준으로 계산하세요.\n"
-        "- location: 공종 및 위치 (예: 무명4교 벽체, 슬라브 철근 거푸집 설치)\n"
-        "- main_work_content: 주요 작업 내용\n"
-        "- worker_count: 작업 근로자수\n"
-        "- equipment: 작업 장비\n"
-        "- site_manager: 책임자 (이름, 연락처)\n"
+        "- work_date: \"2026. 06. 13 (토) 09:00~18:00\" 형식. '이번주 토요일/일요일'은 오늘 날짜 기준으로 계산.\n"
+        "- location, main_work_content, work_reason\n"
+        "- safety_plan, worker_count, equipment, site_manager, emergency_plan\n"
         "\n"
         "응답 형식 (반드시 이 JSON만 출력):\n"
         '{"chat": {"reply": "자연스러운 대화 메시지"}, "json": {"필드키": "값"} 또는 null}')
@@ -574,7 +581,7 @@ def doc_builder_sunday_chat(project_key=None):
             model="deepseek-v4-flash",
             messages=api_messages,
             response_format={"type": "json_object"},
-            max_tokens=1500
+            max_tokens=2000
         )
 
         result = json.loads(response.choices[0].message.content)
