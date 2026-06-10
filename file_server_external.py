@@ -580,11 +580,27 @@ def doc_builder_sunday_chat(project_key=None):
         response = client.chat.completions.create(
             model="deepseek-v4-flash",
             messages=api_messages,
-            response_format={"type": "json_object"},
             max_tokens=2000
         )
 
-        result = json.loads(response.choices[0].message.content)
+        raw = (response.choices[0].message.content or '').strip()
+        app.logger.info(f"[DeepSeek RAW] {raw[:200]}")
+        
+        if not raw:
+            raise ValueError("DeepSeek returned empty response")
+        
+        # JSON 블록 추출 (DeepSeek 가끔 마크다운 코드 블록으로 감싸서 응답함)
+        import re
+        # 1) 마크다운 코드블록 먼저 검사
+        json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', raw)
+        if json_match:
+            raw = json_match.group(1).strip()
+        else:
+            # 2) 순수 JSON 객체 추출 시도 ({...})
+            brace_match = re.search(r'\{[\s\S]*\}', raw)
+            if brace_match:
+                raw = brace_match.group(0)
+        result = json.loads(raw)
         chat_part = result.get("chat", {})
         json_part = result.get("json")
         completed = result.get("completed", False)
